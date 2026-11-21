@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<title>Gudang</title>
+<style>
+  :root{
+    --fg:#111827; --mut:#4b5563; --bd:#e5e7eb; --bg:#f3f4f6; --card:#fff;
+    --acc:#1f6feb; --acc-d:#1a5fd0;
+    --green:#1a7f37; --green-bg:#dcfce7;
+    --amber:#b45309; --amber-bg:#fef3c7;
+    --red:#cf222e;  --red-bg:#fee2e2;
+    --blue:#1d4ed8; --blue-bg:#dbeafe;
+    --purple:#7c3aed;--purple-bg:#ede9fe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);color:var(--fg);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+  .wrap{max-width:640px;margin:0 auto;padding:16px}
+  header{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--card);
+    border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10}
+  header .title{font-weight:700;font-size:20px}
+  nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+  nav a{min-height:50px;display:flex;align-items:center;justify-content:center;text-align:center;
+    text-decoration:none;color:var(--fg);background:var(--card);border:1px solid var(--bd);
+    border-radius:12px;padding:10px 6px;font-size:15px;font-weight:600}
+  nav a:active{background:var(--acc);color:#fff;border-color:var(--acc)}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+  .card h2{margin:0 0 12px;font-size:18px;font-weight:700}
+  label{font-size:15px;color:#374151;display:block;margin:12px 0 6px;font-weight:600}
+  input,select{width:100%;padding:12px;border:1px solid var(--bd);border-radius:10px;font-size:17px;background:#fff;min-height:50px}
+  button,.btn{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:15px 16px;
+    font-size:17px;font-weight:600;cursor:pointer;width:100%;margin-top:12px;min-height:54px}
+  button.sec,.btn.sec{background:#fff;color:var(--fg);border:1px solid var(--bd)}
+  button:active{background:var(--acc-d)}
+  .msg{padding:12px 14px;border-radius:10px;margin-bottom:12px;font-size:15px;font-weight:500}
+  .msg.ok{background:var(--green-bg);color:var(--green)}
+  .msg.err{background:var(--red-bg);color:var(--red)}
+  .list{list-style:none;padding:0;margin:0}
+  .list li{padding:14px 0;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .list li:last-child{border-bottom:0}
+  .scroll{max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:4px}
+  .muted{color:var(--mut);font-size:14px}
+  .green{color:var(--green);font-weight:700}
+  .amber{color:var(--amber);font-weight:700}
+  .red{color:var(--red);font-weight:700}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700}
+  .badge.aktif{background:var(--amber-bg);color:var(--amber)}
+  .badge.selesai{background:var(--green-bg);color:var(--green)}
+  .badge.rusak{background:var(--red-bg);color:var(--red)}
+  .num{font-size:30px;font-weight:800;line-height:1}
+  .item{border:1px solid var(--bd);border-radius:12px;padding:14px;margin:10px 0}
+  .item .top{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:16px}
+  th,td{text-align:left;padding:10px 6px;border-bottom:1px solid var(--bd)}
+  th{color:var(--mut);font-size:14px;font-weight:700}
+  .hint{font-size:14px;color:var(--mut);margin:6px 0 10px;line-height:1.5}
+  .quick{display:grid;gap:10px;margin-bottom:14px}
+  .quick a{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;background:var(--card);
+    border:1px solid var(--bd);text-decoration:none;color:var(--fg);font-size:18px;font-weight:700;min-height:64px}
+  .quick a:active{background:#f9fafb}
+  .qa-ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .qa-ic svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2}
+  .qa-green .qa-ic{background:var(--green-bg);color:var(--green)}
+  .qa-blue .qa-ic{background:var(--blue-bg);color:var(--blue)}
+  .qa-amber .qa-ic{background:var(--amber-bg);color:var(--amber)}
+  .qa-purple .qa-ic{background:var(--purple-bg);color:var(--purple)}
+  .stat{display:flex;gap:10px;margin-bottom:14px}
+  .stat .box{flex:1;border:1px solid var(--bd);border-radius:14px;padding:14px;text-align:center}
+  .stat .box .n{font-size:28px;font-weight:800;line-height:1.1}
+  .stat .box .l{font-size:13px;color:var(--mut)}
+  .stat .box.blue{background:var(--blue-bg);border-color:#bfdbfe}
+  .stat .box.blue .n{color:var(--blue)}
+  .stat .box.amber{background:var(--amber-bg);border-color:#fde68a}
+  .stat .box.amber .n{color:var(--amber)}
+  a.back{display:block;text-align:center;margin-top:14px;font-size:16px;color:var(--mut);text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <span class="title">Gudang</span>
+  <a href="/qr" style="margin-left:auto;font-size:15px;color:var(--acc);text-decoration:none;font-weight:700">Kode QR</a>
+</header>
+<div class="wrap">
+  @if(session('ok'))<div class="msg ok">{{ session('ok') }}</div>@endif
+  @if(session('err'))<div class="msg err">{{ session('err') }}</div>@endif
+  @if($errors->any())<div class="msg err">{{ $errors->first() }}</div>@endif
+
+  <nav>
+    <a href="/">Beranda</a>
+    <a href="/acara">Acara</a>
+    <a href="/pengembalian">Kembali</a>
+    <a href="/restock">Stok</a>
+  </nav>
+
+  @yield('content')
+</div>
+</body>
+</html>
