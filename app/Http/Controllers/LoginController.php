@@ -30,7 +30,11 @@ class LoginController extends Controller
             // Regenerate ulang token setelah session regenerate (cegah 419 di request berikutnya)
             $request->session()->regenerateToken();
             LogAktivitas::create(['aksi'=>'login','entitas'=>'user','keterangan'=>auth()->user()->name]);
-            return redirect()->intended('/');
+
+            // Pekerja tidak punya akses ke dashboard -> arahkan ke halaman QR
+            $target = auth()->user()->role === 'admin' ? '/' : '/qr';
+
+            return redirect()->intended($target);
         }
 
         return back()->withErrors(['email' => 'Email atau password salah.'])->onlyInput('email');
