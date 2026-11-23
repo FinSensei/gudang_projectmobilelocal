@@ -22,10 +22,10 @@
   header{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--card);
     border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10}
   header .title{font-weight:700;font-size:20px}
-  nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+  nav{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:14px 0}
   nav a{min-height:50px;display:flex;align-items:center;justify-content:center;text-align:center;
     text-decoration:none;color:var(--fg);background:var(--card);border:1px solid var(--bd);
-    border-radius:12px;padding:10px 6px;font-size:15px;font-weight:600}
+    border-radius:12px;padding:10px 4px;font-size:13px;font-weight:600}
   nav a:active{background:var(--acc);color:#fff;border-color:var(--acc)}
   .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
   .card h2{margin:0 0 12px;font-size:18px;font-weight:700}
@@ -50,7 +50,7 @@
   .badge.aktif{background:var(--amber-bg);color:var(--amber)}
   .badge.selesai{background:var(--green-bg);color:var(--green)}
   .badge.rusak{background:var(--red-bg);color:var(--red)}
-  .num{font-size:30px;font-weight:800;line-height:1}
+  .num{font-size:30px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
   .item{border:1px solid var(--bd);border-radius:12px;padding:14px;margin:10px 0}
   .item .top{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:600}
   table{width:100%;border-collapse:collapse;font-size:16px}
@@ -69,13 +69,31 @@
   .qa-purple .qa-ic{background:var(--purple-bg);color:var(--purple)}
   .stat{display:flex;gap:10px;margin-bottom:14px}
   .stat .box{flex:1;border:1px solid var(--bd);border-radius:14px;padding:14px;text-align:center}
-  .stat .box .n{font-size:28px;font-weight:800;line-height:1.1}
+  .stat .box .n{font-size:28px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
   .stat .box .l{font-size:13px;color:var(--mut)}
   .stat .box.blue{background:var(--blue-bg);border-color:#bfdbfe}
   .stat .box.blue .n{color:var(--blue)}
   .stat .box.amber{background:var(--amber-bg);border-color:#fde68a}
   .stat .box.amber .n{color:var(--amber)}
   a.back{display:block;text-align:center;margin-top:14px;font-size:16px;color:var(--mut);text-decoration:none}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:2px}
+  .card-head h2{margin:0}
+  .btn.sm{width:auto;min-height:0;padding:9px 14px;margin:0;font-size:15px;display:inline-block;text-align:center;white-space:nowrap}
+  .btn.sm.sec{background:#fff;color:var(--fg);border:1px solid var(--bd)}
+  a.btn{display:block;text-align:center}
+  .table-scroll{overflow:auto;max-height:42vh;-webkit-overflow-scrolling:touch;margin-top:8px;border:1px solid var(--bd);border-radius:10px}
+  .table-scroll table{width:100%;min-width:0;table-layout:fixed;margin:0}
+  .table-scroll th,.table-scroll td{padding:8px 5px;font-size:14px;overflow-wrap:break-word;word-wrap:break-word}
+  .table-scroll.fit th:first-child,.table-scroll.fit td:first-child{width:72%}
+  .table-scroll.fit th:last-child,.table-scroll.fit td:last-child{width:28%;text-align:right}
+  .table-scroll.cols5 th:nth-child(1),.table-scroll.cols5 td:nth-child(1){width:30%}
+  .table-scroll.cols5 th:nth-child(2),.table-scroll.cols5 td:nth-child(2){width:15%}
+  .table-scroll.cols5 th:nth-child(3),.table-scroll.cols5 td:nth-child(3){width:18%}
+  .table-scroll.cols5 th:nth-child(4),.table-scroll.cols5 td:nth-child(4){width:15%}
+  .table-scroll.cols5 th:nth-child(5),.table-scroll.cols5 td:nth-child(5){width:22%}
+  td.hi{color:var(--red);font-weight:700}
+  .row-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .row-actions .btn{margin-top:0}
 </style>
 </head>
 <body>
@@ -91,7 +109,8 @@
   <nav>
     <a href="/">Beranda</a>
     <a href="/acara">Acara</a>
-    <a href="/pengembalian">Kembali</a>
+    <a href="/proses">Proses</a>
+    <a href="/riwayat">Kembali</a>
     <a href="/restock">Stok</a>
   </nav>
 

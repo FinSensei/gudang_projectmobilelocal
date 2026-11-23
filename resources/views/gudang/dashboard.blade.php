@@ -6,6 +6,26 @@
   <div class="box amber"><div class="n">{{ $acaraAktif->count() }}</div><div class="l">acara aktif</div></div>
 </div>
 
+@if($lowStock->isNotEmpty())
+<div class="card" style="border-color:var(--red)">
+  <h2 style="color:var(--red)">Stok habis / menipis</h2>
+  <p class="hint">Stok baik 0 (habis) atau kurang dari 10% (menipis) — segera restock.</p>
+  <div class="scroll">
+    <ul class="list">
+      @foreach($lowStock as $b)
+        <li>
+          <div><b>{{ $b->nama_barang }}</b><div class="muted">{{ $b->lokasi ?: 'tanpa lokasi' }}</div></div>
+          <div style="text-align:right">
+            <span class="badge {{ $b->statusStok()==='habis' ? 'rusak' : 'aktif' }}">{{ $b->statusStok() }}</span>
+            <div class="muted">baik {{ $b->stok_baik }} / {{ $b->stok_total }}</div>
+          </div>
+        </li>
+      @endforeach
+    </ul>
+  </div>
+</div>
+@endif
+
 <div class="quick">
   <a href="/barang" class="qa-green">
     <span class="qa-ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
@@ -48,6 +68,16 @@
 
 <div class="card">
   <h2>Stok barang</h2>
+  <form method="GET" action="/" class="row" style="margin-bottom:12px">
+    <input name="q" value="{{ $q ?? '' }}" placeholder="Cari nama barang..." style="flex:1">
+    <select name="kategori" style="flex:1">
+      <option value="">Semua kategori</option>
+      @foreach($kategori as $k)
+        <option value="{{ $k->id }}" {{ request('kategori') == $k->id ? 'selected' : '' }}>{{ $k->nama_kategori }}</option>
+      @endforeach
+    </select>
+    <button type="submit" class="sec" style="width:auto;flex:0;margin:0">Cari</button>
+  </form>
   @if($barang->isEmpty())
     <p class="muted">Belum ada barang. Tambah lewat menu Stok.</p>
   @else
@@ -59,6 +89,13 @@
           <div>
             <b style="font-size:17px">{{ $b->nama_barang }}</b>
             <div class="muted">{{ $b->lokasi ?: 'tanpa lokasi' }} · baik <span class="green">{{ $b->stok_baik }}</span></div>
+            <div style="margin-top:6px;display:flex;gap:6px">
+              <a href="/barang/{{ $b->id }}/edit" class="badge selesai" style="text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 10px">Edit</a>
+              <form method="POST" action="/barang/{{ $b->id }}" style="display:inline;margin:0" onsubmit="return confirm('Hapus barang ini?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="badge rusak" style="border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 10px;font-size:13px">Hapus</button>
+              </form>
+            </div>
           </div>
           <div style="text-align:right">
             <div class="num {{ $st==='sedang digunakan' ? 'amber' : 'green' }}">{{ $b->stok_total }}</div>

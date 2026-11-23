@@ -25,6 +25,7 @@ class PengembalianService
                     ->sum('jumlah_keluar');
 
                 $kembali = (int) $detail->jumlah_kembali;
+                $kembali = min($kembali, $qtyOut); // clamp: kembali tidak boleh melebihi keluar
                 $hilang = $qtyOut - $kembali;
 
                 $detail->jumlah_hilang = $hilang;
