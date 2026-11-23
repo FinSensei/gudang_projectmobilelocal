@@ -106,23 +106,23 @@
   @if(session('err'))<div class="msg err">{{ session('err') }}</div>@endif
   @if($errors->any())<div class="msg err">{{ $errors->first() }}</div>@endif
 
-  <nav>
-    <a href="/">Beranda</a>
-    <a href="/acara">Acara</a>
-    <a href="/proses">Proses</a>
-    <a href="/riwayat">Kembali</a>
-    <a href="/restock">Stok</a>
-  </nav>
-
-  <nav style="grid-template-columns:repeat(4,1fr);margin:0 0 14px">
-    <a href="/log" style="min-height:42px;font-size:13px">Log</a>
-    <a href="/qr" style="min-height:42px;font-size:13px">QR</a>
-    <a href="/kategori" style="min-height:42px;font-size:13px">Kategori</a>
-    <a href="/barang" style="min-height:42px;font-size:13px">Tambah</a>
-  </nav>
-
   @auth
     @if(auth()->user()->role === 'admin')
+      <nav>
+        <a href="/">Beranda</a>
+        <a href="/acara">Acara</a>
+        <a href="/proses">Proses</a>
+        <a href="/riwayat">Kembali</a>
+        <a href="/restock">Stok</a>
+      </nav>
+
+      <nav style="grid-template-columns:repeat(4,1fr);margin:0 0 14px">
+        <a href="/log" style="min-height:42px;font-size:13px">Log</a>
+        <a href="/qr" style="min-height:42px;font-size:13px">QR</a>
+        <a href="/kategori" style="min-height:42px;font-size:13px">Kategori</a>
+        <a href="/barang" style="min-height:42px;font-size:13px">Tambah</a>
+      </nav>
+
       <nav style="grid-template-columns:repeat(2,1fr);margin:0 0 14px">
         <a href="/users" style="min-height:42px;font-size:13px">Pengguna</a>
         <form method="POST" action="/logout" style="margin:0">
@@ -131,6 +131,10 @@
         </form>
       </nav>
     @else
+      {{-- Pekerja: hanya QR & scan --}}
+      <nav style="grid-template-columns:1fr">
+        <a href="/qr">Scan & Lihat Stok</a>
+      </nav>
       <nav style="grid-template-columns:1fr;margin:0 0 14px">
         <form method="POST" action="/logout" style="margin:0">
           @csrf
