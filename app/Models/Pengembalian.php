@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pengembalian extends Model
 {
+    use \Illuminate\Database\Eloquent\SoftDeletes;
+
     protected $table = 'pengembalian';
     protected $fillable = ['tanggal_pulang', 'dicatat_oleh', 'catatan'];
 

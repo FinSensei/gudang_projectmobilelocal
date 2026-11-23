@@ -13,7 +13,6 @@ use App\Services\PengembalianService;
 
 class PengembalianServiceTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_pengembalian_menghitung_hilang_dari_beberapa_event_tanpa_menghitung_event_yang_masih_keluar(): void
     {

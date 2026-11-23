@@ -17,7 +17,7 @@
   </table>
   <p style="font-size:18px;margin-top:12px">Total hilang: <b class="{{ $totalHilang>0 ? 'hi' : '' }}" style="font-size:22px">{{ $totalHilang }}</b></p>
 
-  <form method="POST" action="/pengembalian">
+  <form method="POST" action="/pengembalian" id="form-final">
     @csrf
     @foreach($acara_ids as $id)
       <input type="hidden" name="acara_ids[]" value="{{ $id }}">
@@ -27,8 +27,16 @@
     @endforeach
     <input type="hidden" name="tanggal" value="{{ $tanggal }}">
 
-    <button type="submit">Simpan pengembalian</button>
+    <button type="submit" id="btn-simpan">Simpan pengembalian</button>
     <a href="/pengembalian" class="back">Batal</a>
   </form>
+  <script>
+    // Cegah double-submit: disable tombol setelah klik
+    document.getElementById('form-final').addEventListener('submit', function(){
+      var btn = document.getElementById('btn-simpan');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+    });
+  </script>
 </div>
 @endsection

@@ -6,6 +6,15 @@
   <div class="box amber"><div class="n">{{ $acaraAktif->count() }}</div><div class="l">acara aktif</div></div>
 </div>
 
+<div class="card">
+  <h2>Ringkasan</h2>
+  <div class="stat" style="margin-bottom:0">
+    <div class="box blue"><div class="n">{{ $totalKeluar }}</div><div class="l">unit keluar</div></div>
+    <div class="box amber"><div class="n">{{ $totalKembali }}</div><div class="l">unit kembali</div></div>
+  </div>
+  <p style="font-size:18px;margin:14px 0 0">Total hilang: <b class="{{ $totalHilang > 0 ? 'hi' : '' }}" style="font-size:24px">{{ $totalHilang }}</b> unit</p>
+</div>
+
 @if($lowStock->isNotEmpty())
 <div class="card" style="border-color:var(--red)">
   <h2 style="color:var(--red)">Stok habis / menipis</h2>
@@ -66,6 +75,10 @@
   @endif
 </div>
 
+  <div class="row-actions" style="margin:0 0 12px">
+    <a href="/stok/excel" class="btn sm sec">Unduh Excel</a>
+  </div>
+
 <div class="card">
   <h2>Stok barang</h2>
   <form method="GET" action="/" class="row" style="margin-bottom:12px">
@@ -91,6 +104,7 @@
             <div class="muted">{{ $b->lokasi ?: 'tanpa lokasi' }} · baik <span class="green">{{ $b->stok_baik }}</span></div>
             <div style="margin-top:6px;display:flex;gap:6px">
               <a href="/barang/{{ $b->id }}/edit" class="badge selesai" style="text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 10px">Edit</a>
+              <a href="/barang/{{ $b->id }}/riwayat" class="badge selesai" style="text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 10px">Riwayat</a>
               <form method="POST" action="/barang/{{ $b->id }}" style="display:inline;margin:0" onsubmit="return confirm('Hapus barang ini?')">
                 @csrf @method('DELETE')
                 <button type="submit" class="badge rusak" style="border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 10px;font-size:13px">Hapus</button>

@@ -8,7 +8,6 @@ use App\Models\Barang;
 
 class BarangStatusStokTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_stok_habis_jika_baik_nol(): void
     {

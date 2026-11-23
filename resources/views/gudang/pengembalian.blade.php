@@ -7,7 +7,7 @@
   @if($aktif->isEmpty())
     <p class="muted">Tidak ada acara aktif.</p>
   @else
-  <form method="POST" action="/pengembalian/preview">
+  <form method="POST" action="/pengembalian/preview" id="form-kembali">
     @csrf
     @foreach($aktif as $a)
       <div class="item">
@@ -23,13 +23,21 @@
         </div>
         @foreach($a->detailAcara as $d)
           <label>{{ $d->barang->nama_barang }} — kembali
-            <input name="kembali[{{ $d->barang_id }}]" type="number" min="0" value="{{ $d->jumlah_keluar }}" style="max-width:120px;display:inline-block;margin-left:8px">
+            <input name="kembali[{{ $d->barang_id }}]" type="number" min="0" max="{{ $d->jumlah_keluar }}" value="{{ $d->jumlah_keluar }}" style="max-width:120px;display:inline-block;margin-left:8px">
           </label>
         @endforeach
       </div>
     @endforeach
-    <button type="submit">Lanjut — lihat ringkasan</button>
+    <button type="submit" id="btn-simpan">Lanjut — lihat ringkasan</button>
   </form>
+  <script>
+    // Cegah double-submit: disable tombol setelah klik
+    document.getElementById('form-kembali').addEventListener('submit', function(){
+      var btn = document.getElementById('btn-simpan');
+      btn.disabled = true;
+      btn.textContent = 'Memproses...';
+    });
+  </script>
   @endif
 </div>
 @endsection

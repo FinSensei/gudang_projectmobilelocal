@@ -11,7 +11,6 @@ use App\Services\CheckoutService;
 
 class CheckoutServiceTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_checkout_mengurangi_stok_baik_dan_mencatat_detail(): void
     {

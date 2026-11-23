@@ -114,6 +114,32 @@
     <a href="/restock">Stok</a>
   </nav>
 
+  <nav style="grid-template-columns:repeat(4,1fr);margin:0 0 14px">
+    <a href="/log" style="min-height:42px;font-size:13px">Log</a>
+    <a href="/qr" style="min-height:42px;font-size:13px">QR</a>
+    <a href="/kategori" style="min-height:42px;font-size:13px">Kategori</a>
+    <a href="/barang" style="min-height:42px;font-size:13px">Tambah</a>
+  </nav>
+
+  @auth
+    @if(auth()->user()->role === 'admin')
+      <nav style="grid-template-columns:repeat(2,1fr);margin:0 0 14px">
+        <a href="/users" style="min-height:42px;font-size:13px">Pengguna</a>
+        <form method="POST" action="/logout" style="margin:0">
+          @csrf
+          <button type="submit" class="sec" style="min-height:42px;margin:0;width:100%;font-size:13px">Keluar ({{ auth()->user()->name }})</button>
+        </form>
+      </nav>
+    @else
+      <nav style="grid-template-columns:1fr;margin:0 0 14px">
+        <form method="POST" action="/logout" style="margin:0">
+          @csrf
+          <button type="submit" class="sec" style="min-height:42px;margin:0;width:100%;font-size:13px">Keluar ({{ auth()->user()->name }})</button>
+        </form>
+      </nav>
+    @endif
+  @endauth
+
   @yield('content')
 </div>
 </body>

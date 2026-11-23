@@ -21,6 +21,9 @@
   <div class="card">
     <h1>{{ $b->nama_barang }}</h1>
     <div class="muted">{{ $b->lokasi ?: 'tanpa lokasi' }}</div>
+    @if($b->ukuran)
+      <div class="muted">Ukuran: <b>{{ $b->ukuran }}</b></div>
+    @endif
     <div class="big">{{ $b->stok_total }}</div>
     <div class="muted">stok asli · baik {{ $b->stok_baik }} · rusak {{ $b->stok_rusak }}</div>
     <div><span class="badge {{ $b->statusPemakaian()==='sedang digunakan'?'keluar':'' }}">{{ $b->statusPemakaian() }}</span></div>

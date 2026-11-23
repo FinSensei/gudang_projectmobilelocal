@@ -12,7 +12,7 @@ class Barang extends Model
     use SoftDeletes;
 
     protected $table = 'barang';
-    protected $fillable = ['kategori_id', 'nama_barang', 'satuan', 'kode_qr', 'stok_total', 'stok_baik', 'stok_rusak', 'lokasi', 'foto', 'status_kondisi'];
+    protected $fillable = ['kategori_id', 'nama_barang', 'satuan', 'ukuran', 'kode_qr', 'stok_total', 'stok_baik', 'stok_rusak', 'lokasi', 'foto', 'status_kondisi'];
 
     protected function casts(): array
     {

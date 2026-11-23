@@ -8,6 +8,7 @@
       <p class="hint">Rincian tiap gelombang.</p>
     </div>
     <a href="/riwayat/pdf" class="btn sm">Unduh PDF</a>
+    <a href="/riwayat/excel" class="btn sm sec" style="margin-top:6px">Unduh Excel</a>
   </div>
 
   @if($pengembalian->isEmpty())
@@ -39,6 +40,10 @@
           </table>
         </div>
         <a href="/riwayat/{{ $p->id }}" class="btn sm sec" style="margin-top:10px">Detail</a>
+        <form method="POST" action="/pengembalian/{{ $p->id }}/undo" style="display:inline;margin:0" onsubmit="return confirm('Batalkan pengembalian ini? Stok akan dikembalikan.')">
+          @csrf
+          <button type="submit" class="btn sm sec" style="color:var(--red);border-color:var(--red)">Undo</button>
+        </form>
       </div>
     @endforeach
   @endif

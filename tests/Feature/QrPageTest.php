@@ -8,7 +8,6 @@ use App\Models\Barang;
 
 class QrPageTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_halaman_qr_menampilkan_setiap_barang_dengan_kodenya(): void
     {

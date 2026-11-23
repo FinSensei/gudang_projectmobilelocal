@@ -9,7 +9,6 @@ use App\Models\Acara;
 
 class BarangTambahHapusTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_tambah_stok_menambah_total_dan_baik(): void
     {

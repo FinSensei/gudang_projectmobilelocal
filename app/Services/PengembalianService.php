@@ -28,6 +28,7 @@ class PengembalianService
                 $kembali = min($kembali, $qtyOut); // clamp: kembali tidak boleh melebihi keluar
                 $hilang = $qtyOut - $kembali;
 
+                $detail->jumlah_kembali = $kembali; // simpan nilai yang sudah di-clamp
                 $detail->jumlah_hilang = $hilang;
                 $detail->save();
 

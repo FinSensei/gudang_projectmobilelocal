@@ -29,7 +29,13 @@ class GudangController extends Controller
         $acaraAktif = Acara::where('status', 'aktif')->orderByDesc('id')->get();
         $kategori = Kategori::orderBy('nama_kategori')->get();
         $lowStock = Barang::orderBy('stok_baik')->get()->filter(fn ($b) => $b->statusStok() !== 'aman')->values();
-        return view('gudang.dashboard', compact('barang', 'acaraAktif', 'q', 'kategori', 'lowStock'));
+
+        // Ringkasan: total barang hilang dari semua pengembalian
+        $totalHilang = DetailPengembalian::sum('jumlah_hilang');
+        $totalKembali = DetailPengembalian::sum('jumlah_kembali');
+        $totalKeluar = DetailAcara::sum('jumlah_keluar');
+
+        return view('gudang.dashboard', compact('barang', 'acaraAktif', 'q', 'kategori', 'lowStock', 'totalHilang', 'totalKembali', 'totalKeluar'));
     }
 
     // ---------- Restock ----------
@@ -143,11 +149,29 @@ class GudangController extends Controller
             'kembali.*'   => 'integer|min:0',
         ]);
 
+        // Acara yang sudah selesai tidak boleh diproses ulang
+        $selesai = Acara::whereIn('id', $data['acara_ids'])->where('status', '!=', 'aktif')->exists();
+        if ($selesai) {
+            return back()->withErrors(['acara_ids' => 'Ada acara yang sudah selesai. Pilih hanya acara yang masih aktif.'])->withInput();
+        }
+
         $acaraIds = $data['acara_ids'];
         $outMap = [];
         DetailAcara::whereIn('acara_id', $acaraIds)->get()->each(function($d) use (&$outMap){
             $outMap[$d->barang_id] = ($outMap[$d->barang_id] ?? 0) + $d->jumlah_keluar;
         });
+
+        // Kembali tidak boleh melebihi jumlah keluar
+        $lebih = [];
+        foreach ($outMap as $bid => $out) {
+            $k = (int)($data['kembali'][$bid] ?? 0);
+            if ($k > $out) {
+                $lebih[] = Barang::find($bid)->nama_barang;
+            }
+        }
+        if ($lebih) {
+            return back()->withErrors(['kembali' => 'Jumlah kembali melebihi jumlah keluar untuk: '.implode(', ', $lebih)])->withInput();
+        }
 
         $rows = [];
         foreach ($outMap as $bid => $out) {
@@ -179,8 +203,29 @@ class GudangController extends Controller
             'acara_ids.*' => 'exists:acara,id',
             'kembali'     => 'required|array',
             'kembali.*'   => 'integer|min:0',
-            'tanggal'     => 'nullable|date',
         ]);
+
+        // Acara yang sudah selesai tidak boleh diproses ulang
+        $selesai = Acara::whereIn('id', $data['acara_ids'])->where('status', '!=', 'aktif')->exists();
+        if ($selesai) {
+            return back()->withErrors(['acara_ids' => 'Ada acara yang sudah selesai. Pilih hanya acara yang masih aktif.'])->withInput();
+        }
+
+        // Kembali tidak boleh melebihi jumlah keluar
+        $outMap = [];
+        DetailAcara::whereIn('acara_id', $data['acara_ids'])->get()->each(function ($d) use (&$outMap) {
+            $outMap[$d->barang_id] = ($outMap[$d->barang_id] ?? 0) + $d->jumlah_keluar;
+        });
+        $lebih = [];
+        foreach ($outMap as $bid => $out) {
+            $k = (int) ($data['kembali'][$bid] ?? 0);
+            if ($k > $out) {
+                $lebih[] = Barang::find($bid)->nama_barang;
+            }
+        }
+        if ($lebih) {
+            return back()->withErrors(['kembali' => 'Jumlah kembali melebihi jumlah keluar untuk: '.implode(', ', $lebih)])->withInput();
+        }
 
         DB::transaction(function () use ($data) {
             $p = Pengembalian::create([
@@ -219,6 +264,7 @@ class GudangController extends Controller
             'nama.*'  => 'required|string|max:100',
             'jumlah'  => 'required|array',
             'jumlah.*'=> 'required|integer|min:0',
+            'ukuran'  => 'nullable|string|max:50',
             'kategori_id' => 'nullable|exists:kategori,id',
         ]);
 
@@ -229,6 +275,7 @@ class GudangController extends Controller
                     'nama_barang' => $nama,
                     'kategori_id' => $data['kategori_id'] ?? null,
                     'satuan'      => 'pcs',
+                    'ukuran'      => $data['ukuran'] ?? null,
                     'kode_qr'     => 'QR-'.strtoupper(Str::random(8)),
                     'stok_total'  => (int) $data['jumlah'][$i],
                     'stok_baik'   => (int) $data['jumlah'][$i],
@@ -249,12 +296,49 @@ class GudangController extends Controller
         return view('gudang.barang_edit', compact('barang', 'kategori'));
     }
 
+    /** Riwayat transaksi satu barang */
+    public function barangRiwayat($id)
+    {
+        $barang = Barang::findOrFail($id);
+
+        $keluar = DetailAcara::with('acara')
+            ->where('barang_id', $barang->id)
+            ->orderByDesc('id')->get();
+
+        $kembali = DetailPengembalian::with('pengembalian')
+            ->where('barang_id', $barang->id)
+            ->orderByDesc('id')->get();
+
+        $rows = [];
+        foreach ($keluar as $k) {
+            $rows[] = [
+                'tanggal' => $k->acara->tanggal,
+                'tipe'    => 'keluar',
+                'acara'   => $k->acara->nama_acara,
+                'jumlah'  => $k->jumlah_keluar,
+            ];
+        }
+        foreach ($kembali as $k) {
+            $rows[] = [
+                'tanggal' => $k->pengembalian->tanggal_pulang,
+                'tipe'    => 'kembali',
+                'acara'   => $k->pengembalian->acara->pluck('nama_acara')->join(', '),
+                'jumlah'  => $k->jumlah_kembali,
+                'hilang'  => $k->jumlah_hilang,
+            ];
+        }
+        usort($rows, fn ($a, $b) => ($b['tanggal'] ?? '') <=> ($a['tanggal'] ?? ''));
+
+        return view('gudang.barang_riwayat', compact('barang', 'rows'));
+    }
+
     public function barangUpdate(Request $request, $id)
     {
         $barang = Barang::findOrFail($id);
         $data = $request->validate([
             'nama_barang' => 'required|string|max:100',
             'satuan'      => 'required|string|max:20',
+            'ukuran'      => 'nullable|string|max:50',
             'lokasi'      => 'nullable|string|max:100',
             'kategori_id' => 'nullable|exists:kategori,id',
         ]);
@@ -338,6 +422,60 @@ class GudangController extends Controller
         return view('gudang.proses_detail', compact('a'));
     }
 
+    /** Batalkan acara: barang kembali ke stok, status jadi batal */
+    public function acaraBatalkan($id)
+    {
+        $a = Acara::with('detailAcara')->findOrFail($id);
+
+        if ($a->status !== 'aktif') {
+            return back()->with('err', 'Hanya acara aktif yang bisa dibatalkan.');
+        }
+
+        DB::transaction(function () use ($a) {
+            foreach ($a->detailAcara as $d) {
+                $b = Barang::find($d->barang_id);
+                if ($b) {
+                    $b->stok_baik += $d->jumlah_keluar;
+                    $b->save();
+                }
+            }
+            $a->update(['status' => 'batal']);
+            LogAktivitas::create(['aksi'=>'batalkan_acara','entitas'=>'acara','keterangan'=>$a->nama_acara]);
+        });
+
+        return back()->with('ok', "Acara {$a->nama_acara} dibatalkan, barang kembali ke stok.");
+    }
+
+    /** Undo pengembalian: kembalikan stok & status acara ke aktif */
+    public function pengembalianUndo($id)
+    {
+        $p = Pengembalian::withTrashed()->with(['acara', 'detailPengembalian'])->findOrFail($id);
+
+        if ($p->trashed()) {
+            return back()->with('err', 'Pengembalian ini sudah dibatalkan.');
+        }
+
+        DB::transaction(function () use ($p) {
+            $acaraIds = $p->acara->pluck('id')->all();
+
+            foreach ($p->detailPengembalian as $detail) {
+                $b = Barang::find($detail->barang_id);
+                if ($b) {
+                    // Batalkan efek: kurangi kembali, tambah kembali yang hilang
+                    $b->stok_baik -= (int) $detail->jumlah_kembali;
+                    $b->stok_total += (int) $detail->jumlah_hilang;
+                    $b->save();
+                }
+            }
+
+            Acara::whereIn('id', $acaraIds)->update(['status' => 'aktif']);
+            $p->delete(); // soft delete
+            LogAktivitas::create(['aksi'=>'undo_pengembalian','entitas'=>'pengembalian','keterangan'=>'batch #'.$p->id]);
+        });
+
+        return back()->with('ok', "Pengembalian batch #{$p->id} dibatalkan, stok dikembalikan.");
+    }
+
     // ---------- Riwayat & Log ----------
     public function riwayat()
     {
@@ -361,6 +499,28 @@ class GudangController extends Controller
         $pengembalian = Pengembalian::with(['acara', 'detailPengembalian.barang'])->orderByDesc('id')->get();
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('gudang.pdf', compact('pengembalian'));
         return $pdf->download('rekap-pengembalian.pdf');
+    }
+
+    public function riwayatExcel()
+    {
+        $xlsx = app(\App\Services\ExcelExportService::class)->riwayat();
+        $filename = 'rekap-pengembalian-'.now()->format('Y-m-d').'.xlsx';
+        return response()->streamDownload(function () use ($xlsx) {
+            $xlsx->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function stokExcel()
+    {
+        $xlsx = app(\App\Services\ExcelExportService::class)->stok();
+        $filename = 'stok-barang-'.now()->format('Y-m-d').'.xlsx';
+        return response()->streamDownload(function () use ($xlsx) {
+            $xlsx->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     // ---------- Halaman QR ----------

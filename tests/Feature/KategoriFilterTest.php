@@ -9,7 +9,6 @@ use App\Models\Kategori;
 
 class KategoriFilterTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_filter_barang_menurut_kategori(): void
     {

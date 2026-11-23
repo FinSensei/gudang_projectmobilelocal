@@ -13,7 +13,6 @@ use App\Services\PengembalianService;
 
 class PengembalianKembaliTest extends TestCase
 {
-    use RefreshDatabase;
 
     // BUG #1: barang dari acara yang TIDAK dicentang tidak boleh diproses
     public function test_pengembalian_tidak_memproses_barang_dari_acara_yang_tidak_dipilih(): void

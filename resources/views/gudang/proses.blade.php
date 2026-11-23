@@ -29,6 +29,10 @@
         <div class="row-actions">
           <a href="/proses/{{ $a->id }}" class="btn sm sec">Detail</a>
           <a href="/pengembalian" class="btn sm">Catat kembali</a>
+          <form method="POST" action="/acara/{{ $a->id }}/batalkan" style="margin:0" onsubmit="return confirm('Batalkan acara ini? Barang akan kembali ke stok.')">
+            @csrf
+            <button type="submit" class="btn sm sec" style="color:var(--red);border-color:var(--red)">Batalkan</button>
+          </form>
         </div>
       </div>
     @endforeach

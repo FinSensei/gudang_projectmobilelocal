@@ -64,12 +64,19 @@ function addBarang(){
   renderList();
 }
 
+// Escape HTML — cegah XSS dari nama barang
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
 function renderList(){
   const list = document.getElementById('list');
   if(!selected.length){ list.innerHTML = ''; return; }
   let rows = selected.map(function(it, i){
     return '<div class="item">'
-      + '<div class="top"><b>'+it.nama+'</b>'
+      + '<div class="top"><b>'+esc(it.nama)+'</b>'
       + '<button type="button" class="sec" style="width:auto;padding:6px 12px;margin:0;font-size:14px" onclick="removeItem('+i+')">Hapus</button></div>'
       + '<label>Jumlah <input type="number" min="1" value="'+it.jumlah+'" name="items['+i+'][jumlah]" style="max-width:110px;display:inline-block;margin-left:8px" oninput="setQty('+i+', this.value)"></label>'
       + '<span class="green" style="margin-left:10px">baik '+it.baik+'</span>'

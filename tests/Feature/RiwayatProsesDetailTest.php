@@ -10,7 +10,6 @@ use App\Models\Pengembalian;
 
 class RiwayatProsesDetailTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_riwayat_list_menampilkan_tombol_detail(): void
     {

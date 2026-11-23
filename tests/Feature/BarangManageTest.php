@@ -8,7 +8,6 @@ use App\Models\Barang;
 
 class BarangManageTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_search_menyaring_barang_menurut_nama(): void
     {

@@ -8,7 +8,6 @@ use App\Models\Barang;
 
 class BarangKurangiTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_kurangi_mengurangi_stok_total_dan_baik(): void
     {
