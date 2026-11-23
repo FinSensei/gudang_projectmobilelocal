@@ -9,9 +9,15 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Color;
 
 class ExcelExportService
 {
+    private const HEADER_FILL = 'FF1F6FEB';   // biru
+    private const HEADER_TEXT = 'FFFFFFFF';
+    private const ALT_FILL    = 'FFF3F6FB';   // abu sangat muda
+    private const LINE        = 'FFD1D5DB';
+
     private function base(): Spreadsheet
     {
         $ss = new Spreadsheet();
@@ -19,39 +25,102 @@ class ExcelExportService
         return $ss;
     }
 
+    /** Header tebal + biru + teks putih + border */
     private function styleHeader(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, string $range): void
     {
-        $sheet->getStyle($range)->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle($range)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF1F6FEB');
-        $sheet->getStyle($range)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle($range)->getFont()->setBold(true)->getColor()->setARGB(self::HEADER_TEXT);
+        $sheet->getStyle($range)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB(self::HEADER_FILL);
+        $sheet->getStyle($range)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle($range)->getBorders()->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB(self::LINE);
     }
 
-    /** Rekap pengembalian per gelombang */
+    /** Baris bergantian + border tipis */
+    private function styleBody(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, int $fromRow, int $toRow, int $cols): void
+    {
+        if ($toRow < $fromRow) return;
+        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cols);
+
+        $sheet->getStyle("A{$fromRow}:{$lastCol}{$toRow}")
+            ->getBorders()->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB(self::LINE);
+
+        for ($r = $fromRow; $r <= $toRow; $r++) {
+            if (($r - $fromRow) % 2 === 1) {
+                $sheet->getStyle("A{$r}:{$lastCol}{$r}")
+                    ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB(self::ALT_FILL);
+            }
+        }
+    }
+
+    /**
+     * Rekap pengembalian — format per acara (image c106b4):
+     *   Nama Pemesan / Lokasi & Tanggal sebagai header blok,
+     *   lalu tabel: Nama Barang | Keterangan | Stok Awal | Jumlah keluar | Jumlah Kembali | Stok Akhir | keterangan
+     */
     public function riwayat(): Xlsx
     {
         $ss = $this->base();
         $sheet = $ss->getActiveSheet();
         $sheet->setTitle('Rekap Pengembalian');
 
-        $sheet->fromArray(['Tanggal', 'Acara', 'Barang', 'Keluar', 'Kembali', 'Hilang', 'Tersedia'], null, 'A1');
-        $this->styleHeader($sheet, 'A1:G1');
+        $sheet->fromArray(['Rekap Pengembalian Barang'], null, 'A1');
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true)->setSize(14);
+        $sheet->mergeCells('A1:G1');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        $row = 2;
-        $pengembalian = Pengembalian::with(['acara', 'detailPengembalian.barang'])->orderByDesc('id')->get();
+        $row = 3;
+        $pengembalian = Pengembalian::with(['acara', 'detailPengembalian.barang'])
+            ->orderByDesc('id')->get();
+
+        if ($pengembalian->isEmpty()) {
+            $sheet->fromArray(['Belum ada pengembalian.'], null, 'A3');
+            return new Xlsx($ss);
+        }
+
         foreach ($pengembalian as $p) {
-            $acaraNama = $p->acara->pluck('nama_acara')->join(', ');
-            foreach ($p->detailRows() as $r) {
+            // Blok identitas acara
+            $sheet->setCellValue('A'.$row, 'Nama Pemesan');
+            $sheet->setCellValue('B'.$row, $p->acara->pluck('nama_acara')->join(', '));
+            $row++;
+
+            $sheet->setCellValue('A'.$row, 'Lokasi & Tanggal');
+            $tanggal = $p->tanggal_pulang?->format('d F Y') ?: '-';
+            $sheet->setCellValue('B'.$row, $tanggal);
+            $row++;
+
+            // Header tabel blok
+            $headerRow = $row;
+            $sheet->fromArray([
+                'Nama Barang', 'Keterangan', 'Stok Awal',
+                'Jumlah keluar', 'Jumlah Kembali', 'Stok Akhir', 'Keterangan',
+            ], null, 'A'.$row);
+            $this->styleHeader($sheet, "A{$row}:G{$row}");
+            $row++;
+
+            // Isi per barang
+            $dataStart = $row;
+            $rows = $p->detailRows();
+            foreach ($rows as $r) {
+                $stokAkhir = $r['tersedia'];
                 $sheet->fromArray([
-                    $p->tanggal_pulang?->format('d/m/Y') ?: '-',
-                    $acaraNama,
                     $r['barang'],
+                    '',                                  // keterangan (opsional)
+                    $r['keluar'] + $r['kembali'],        // stok awal = keluar + kembali
                     $r['keluar'],
                     $r['kembali'],
-                    $r['hilang'],
-                    $r['tersedia'],
+                    $stokAkhir,
+                    $r['hilang'] > 0 ? "hilang {$r['hilang']}" : '',
                 ], null, 'A'.$row);
                 $row++;
             }
+            $this->styleBody($sheet, $dataStart, $row - 1, 7);
+
+            // total blok
+            $sheet->setCellValue('F'.$row, 'Total hilang');
+            $sheet->setCellValue('G'.$row, (int) collect($rows)->sum('hilang'));
+            $sheet->getStyle("F{$row}:G{$row}")->getFont()->setBold(true);
+            $row += 2; // jarak antar blok
         }
 
         for ($c = 'A'; $c <= 'G'; $c++) {
@@ -61,34 +130,55 @@ class ExcelExportService
         return new Xlsx($ss);
     }
 
-    /** Stok barang saat ini */
+    /**
+     * Stok barang — format image a9719c:
+     *   No | Kode Barang | Nama Barang | Photo | Jumlah | Ukuran | Keterangan
+     */
     public function stok(): Xlsx
     {
         $ss = $this->base();
         $sheet = $ss->getActiveSheet();
         $sheet->setTitle('Stok Barang');
 
-        $sheet->fromArray(['Nama Barang', 'Ukuran', 'Satuan', 'Kode QR', 'Total', 'Baik', 'Rusak', 'Keluar', 'Status Stok', 'Lokasi'], null, 'A1');
-        $this->styleHeader($sheet, 'A1:J1');
+        $sheet->fromArray(['Data Stok Barang'], null, 'A1');
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true)->setSize(14);
+        $sheet->mergeCells('A1:G1');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        $row = 2;
-        Barang::orderBy('nama_barang')->get()->each(function ($b) use ($sheet, &$row) {
+        $headerRow = 3;
+        $sheet->fromArray([
+            'No', 'Kode Barang', 'Nama Barang', 'Photo', 'Jumlah', 'Ukuran', 'Keterangan',
+        ], null, 'A'.$headerRow);
+        $this->styleHeader($sheet, "A{$headerRow}:G{$headerRow}");
+
+        $row = $headerRow + 1;
+        $no = 0;
+        Barang::orderBy('nama_barang')->get()->each(function ($b) use ($sheet, &$row, &$no) {
+            $no++;
+            $ket = [];
+            if ($b->stok_rusak > 0) $ket[] = "rusak {$b->stok_rusak}";
+            if ($b->stokKeluar() > 0) $ket[] = "keluar {$b->stokKeluar()}";
+            if ($b->statusStok() !== 'aman') $ket[] = $b->statusStok();
+
             $sheet->fromArray([
-                $b->nama_barang,
-                $b->ukuran ?: '-',
-                $b->satuan,
+                $no,
                 $b->kode_qr,
+                $b->nama_barang,
+                $b->foto ? basename($b->foto) : 'N/A',
                 $b->stok_total,
-                $b->stok_baik,
-                $b->stok_rusak,
-                $b->stokKeluar(),
-                $b->statusStok(),
-                $b->lokasi ?: '-',
+                $b->ukuran ?: 'N/A',
+                $ket ? implode(', ', $ket) : '',
             ], null, 'A'.$row);
             $row++;
         });
 
-        for ($c = 'A'; $c <= 'J'; $c++) {
+        $this->styleBody($sheet, $headerRow + 1, $row - 1, 7);
+
+        // kolom Jumlah rata kanan
+        $sheet->getStyle('E'.($headerRow+1).':E'.($row-1))
+            ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        for ($c = 'A'; $c <= 'G'; $c++) {
             $sheet->getColumnDimension($c)->setAutoSize(true);
         }
 

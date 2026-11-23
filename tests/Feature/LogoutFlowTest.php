@@ -37,6 +37,6 @@ class LogoutFlowTest extends TestCase
         $p = User::create(['name'=>'P','email'=>'p@x.id','password'=>bcrypt('x'),'role'=>'pekerja']);
 
         $this->post('/login', ['email'=>'p@x.id','password'=>'x'])
-            ->assertRedirect('/qr');
+            ->assertRedirect('/scan');
     }
 }

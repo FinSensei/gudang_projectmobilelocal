@@ -65,5 +65,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/users', [LoginController::class, 'indexUsers']);
         Route::post('/users', [LoginController::class, 'storeUser']);
+        Route::put('/users/{id}', [LoginController::class, 'updateUser']);
+        Route::delete('/users/{id}', [LoginController::class, 'destroyUser']);
     });
 });

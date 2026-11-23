@@ -27,12 +27,11 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            // Regenerate ulang token setelah session regenerate (cegah 419 di request berikutnya)
             $request->session()->regenerateToken();
             LogAktivitas::create(['aksi'=>'login','entitas'=>'user','keterangan'=>auth()->user()->name]);
 
-            // Pekerja tidak punya akses ke dashboard -> arahkan ke halaman QR
-            $target = auth()->user()->role === 'admin' ? '/' : '/qr';
+            // Pekerja tidak punya akses dashboard -> arahkan ke halaman scan
+            $target = auth()->user()->role === 'admin' ? '/' : '/scan';
 
             return redirect()->intended($target);
         }
@@ -73,5 +72,45 @@ class LoginController extends Controller
         ]);
 
         return back()->with('ok', "User {$data['name']} dibuat ({$data['role']}).");
+    }
+
+    /** Update user (khusus admin). Password kosong = tidak diubah. */
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $data = $request->validate([
+            'name'     => 'required|string|max:100',
+            'email'    => 'required|email|unique:users,email,'.$user->id,
+            'role'     => 'required|in:admin,pekerja',
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        $user->name  = $data['name'];
+        $user->email = $data['email'];
+        $user->role  = $data['role'];
+
+        if (!empty($data['password'])) {
+            $user->password = Hash::make($data['password']);
+        }
+
+        $user->save();
+
+        return back()->with('ok', "User {$user->name} diperbarui.");
+    }
+
+    /** Hapus user (khusus admin). Admin tidak bisa menghapus dirinya sendiri. */
+    public function destroyUser($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id === auth()->id()) {
+            return back()->with('err', 'Anda tidak bisa menghapus akun Anda sendiri.');
+        }
+
+        $nama = $user->name;
+        $user->delete(); // soft delete
+
+        return back()->with('ok', "User {$nama} dihapus.");
     }
 }

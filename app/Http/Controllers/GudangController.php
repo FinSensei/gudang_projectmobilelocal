@@ -405,8 +405,15 @@ class GudangController extends Controller
     }
     public function kategoriDestroy($id)
     {
-        Kategori::findOrFail($id)->delete();
-        return back()->with('ok', 'Kategori dihapus.');
+        $k = Kategori::findOrFail($id);
+
+        // Kategori yang masih dipakai barang tidak boleh dihapus
+        if (Barang::where('kategori_id', $k->id)->exists()) {
+            return back()->with('err', "Kategori {$k->nama_kategori} masih dipakai barang, tidak bisa dihapus.");
+        }
+
+        $k->delete();
+        return back()->with('ok', "Kategori {$k->nama_kategori} dihapus.");
     }
 
     // ---------- Dalam proses (barang sedang di event) ----------
@@ -477,10 +484,18 @@ class GudangController extends Controller
     }
 
     // ---------- Riwayat & Log ----------
-    public function riwayat()
+    public function riwayat(Request $request)
     {
-        $pengembalian = Pengembalian::with(['acara', 'detailPengembalian.barang'])->orderByDesc('id')->get();
-        return view('gudang.riwayat', compact('pengembalian'));
+        $q = $request->query('q');
+
+        $pengembalian = Pengembalian::with(['acara', 'detailPengembalian.barang'])
+            ->when($q, function ($query) use ($q) {
+                $query->whereHas('acara', fn ($sub) => $sub->where('nama_acara', 'like', "%{$q}%"))
+                      ->orWhereHas('detailPengembalian.barang', fn ($sub) => $sub->where('nama_barang', 'like', "%{$q}%"));
+            })
+            ->orderByDesc('id')->get();
+
+        return view('gudang.riwayat', compact('pengembalian', 'q'));
     }
 
     public function riwayatDetail($id)

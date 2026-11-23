@@ -12,7 +12,6 @@
     <div class="box blue"><div class="n">{{ $totalKeluar }}</div><div class="l">unit keluar</div></div>
     <div class="box amber"><div class="n">{{ $totalKembali }}</div><div class="l">unit kembali</div></div>
   </div>
-  <p style="font-size:18px;margin:14px 0 0">Total hilang: <b class="{{ $totalHilang > 0 ? 'hi' : '' }}" style="font-size:24px">{{ $totalHilang }}</b> unit</p>
 </div>
 
 @if($lowStock->isNotEmpty())
@@ -75,12 +74,14 @@
   @endif
 </div>
 
-  <div class="row-actions" style="margin:0 0 12px">
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>Stok barang</h2>
+      <p class="hint">Kelola stok, tambah/kurangi, atau unduh daftar.</p>
+    </div>
     <a href="/stok/excel" class="btn sm sec">Unduh Excel</a>
   </div>
-
-<div class="card">
-  <h2>Stok barang</h2>
   <form method="GET" action="/" class="row" style="margin-bottom:12px">
     <input name="q" value="{{ $q ?? '' }}" placeholder="Cari nama barang..." style="flex:1">
     <select name="kategori" style="flex:1">
