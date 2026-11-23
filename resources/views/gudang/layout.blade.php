@@ -99,7 +99,11 @@
 <body>
 <header>
   <span class="title">Gudang</span>
-  <a href="/qr" style="margin-left:auto;font-size:15px;color:var(--acc);text-decoration:none;font-weight:700">Kode QR</a>
+  @auth
+    @if(auth()->user()->role === 'admin')
+      <a href="/qr" style="margin-left:auto;font-size:15px;color:var(--acc);text-decoration:none;font-weight:700">Kode QR</a>
+    @endif
+  @endauth
 </header>
 <div class="wrap">
   @if(session('ok'))<div class="msg ok">{{ session('ok') }}</div>@endif
@@ -141,6 +145,7 @@
           <button type="submit" class="sec" style="min-height:42px;margin:0;width:100%;font-size:13px">Keluar ({{ auth()->user()->name }})</button>
         </form>
       </nav>
+      <p class="hint" style="text-align:center;margin-top:-6px">Pekerja hanya bisa melihat stok via QR. Hubungi admin untuk mengubah data.</p>
     @endif
   @endauth
 
