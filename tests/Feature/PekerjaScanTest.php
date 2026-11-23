@@ -18,7 +18,7 @@ class PekerjaScanTest extends TestCase
         $p = User::create(['name'=>'P','email'=>'p@x.id','password'=>bcrypt('x'),'role'=>'pekerja']);
         $this->actingAs($p);
 
-        $this->get('/qr')->assertOk()->assertSee('Scan & Lihat Stok', false);
+        $this->get('/scan')->assertOk()->assertSee('Scan QR Barang');
         $this->assertAuthenticatedAs($p);
     }
 

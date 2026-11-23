@@ -530,6 +530,12 @@ class GudangController extends Controller
         return view('gudang.qr', compact('barang'));
     }
 
+    // ---------- Halaman scan kamera (pekerja) ----------
+    public function scanPage()
+    {
+        return view('gudang.scan_kamera');
+    }
+
     // ---------- Scan (HP) ----------
     public function scan(string $kode)
     {

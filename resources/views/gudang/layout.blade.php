@@ -135,9 +135,9 @@
         </form>
       </nav>
     @else
-      {{-- Pekerja: hanya QR & scan --}}
+      {{-- Pekerja: hanya scan kamera & detail hasil scan --}}
       <nav style="grid-template-columns:1fr">
-        <a href="/qr">Scan & Lihat Stok</a>
+        <a href="/scan">Scan QR Barang</a>
       </nav>
       <nav style="grid-template-columns:1fr;margin:0 0 14px">
         <form method="POST" action="/logout" style="margin:0">

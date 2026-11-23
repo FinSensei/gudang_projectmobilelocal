@@ -24,8 +24,8 @@ class NavRoleTest extends TestCase
     {
         $pekerja = User::create(['name'=>'Pekerja','email'=>'p@x.id','password'=>bcrypt('x'),'role'=>'pekerja']);
         $this->actingAs($pekerja);
-        $res = $this->get('/qr')->assertOk();
-        $res->assertSee('Scan & Lihat Stok', false);
+        $res = $this->get('/scan')->assertOk();
+        $res->assertSee('Scan QR Barang');
         $res->assertDontSee('href="/acara"', false);
         $res->assertDontSee('href="/riwayat"', false);
         $res->assertDontSee('href="/users"', false);

@@ -16,7 +16,7 @@ Route::middleware('auth')->group(function () {
 
     // Scan QR — boleh admin & pekerja
     Route::get('/b/{kode}', [GudangController::class, 'scan'])->name('scan');
-    Route::get('/qr', [GudangController::class, 'qrPage'])->name('qr');
+    Route::get('/scan', [GudangController::class, 'scanPage'])->name('scanpage');
 
     // ---------- Khusus admin ----------
     Route::middleware('role:admin')->group(function () {
@@ -60,6 +60,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/riwayat/{id}', [GudangController::class, 'riwayatDetail'])->whereNumber('id');
 
         Route::get('/log', [GudangController::class, 'log'])->name('log');
+
+        Route::get('/qr', [GudangController::class, 'qrPage'])->name('qr');
 
         Route::get('/users', [LoginController::class, 'indexUsers']);
         Route::post('/users', [LoginController::class, 'storeUser']);

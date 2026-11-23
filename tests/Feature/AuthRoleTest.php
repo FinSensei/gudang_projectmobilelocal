@@ -60,7 +60,7 @@ class AuthRoleTest extends TestCase
     public function test_pekerja_bisa_scan_qr(): void
     {
         $this->actingAs($this->pekerja());
-        $this->get('/qr')->assertOk();
+        $this->get('/scan')->assertOk();
     }
 
     public function test_admin_bisa_semua_halaman(): void
