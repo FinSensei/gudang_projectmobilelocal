@@ -14,6 +14,9 @@ class Barang extends Model
     protected $table = 'barang';
     protected $fillable = ['kategori_id', 'nama_barang', 'satuan', 'ukuran', 'kode_qr', 'stok_total', 'stok_baik', 'stok_rusak', 'lokasi', 'foto', 'status_kondisi'];
 
+    /** Nilai default saat create tanpa menyertakan ukuran */
+    protected $attributes = ['ukuran' => 'N/A'];
+
     protected function casts(): array
     {
         return ['stok_total' => 'integer', 'stok_baik' => 'integer', 'stok_rusak' => 'integer'];

@@ -36,7 +36,7 @@ class SimulasiFormTest extends TestCase
             'ukuran'  => [''],
         ])->assertRedirect();
 
-        $this->assertNull(Barang::where('nama_barang','Sendok')->first()->ukuran);
+        $this->assertSame('N/A', Barang::where('nama_barang','Sendok')->first()->ukuran);
     }
 
     public function test_return_kedua_kali_ditolak_karena_acara_sudah_selesai(): void

@@ -12,6 +12,10 @@
     <label>Satuan</label>
     <input name="satuan" value="{{ $barang->satuan }}" required>
 
+    <label>Ukuran</label>
+    <input name="ukuran" value="{{ $barang->ukuran ?: 'N/A' }}" placeholder="mis. 21 cm atau N/A">
+    <p class="hint">Isi ukuran fisik barang. Kalau tidak ada, biarkan "N/A".</p>
+
     <label>Lokasi</label>
     <input name="lokasi" value="{{ $barang->lokasi }}" placeholder="mis. Lantai 1 Rak A">
 

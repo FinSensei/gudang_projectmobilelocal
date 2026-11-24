@@ -36,7 +36,7 @@ class BarangUkuranTest extends TestCase
             'stok_rusak'  => 0,
         ]);
 
-        $this->assertNull($b->fresh()->ukuran);
+        $this->assertSame('N/A', $b->fresh()->ukuran);
     }
 
     public function test_scan_page_menampilkan_ukuran(): void

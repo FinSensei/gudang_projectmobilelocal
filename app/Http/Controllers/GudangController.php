@@ -298,7 +298,7 @@ class GudangController extends Controller
                     'nama_barang' => $nama,
                     'kategori_id' => $data['kategori_id'] ?? null,
                     'satuan'      => 'pcs',
-                    'ukuran'      => $data['ukuran'][$i] ?? null,
+                    'ukuran'      => ($data['ukuran'][$i] ?? '') !== '' ? $data['ukuran'][$i] : 'N/A',
                     'kode_qr'     => 'QR-'.strtoupper(Str::random(8)),
                     'stok_total'  => (int) $data['jumlah'][$i],
                     'stok_baik'   => (int) $data['jumlah'][$i],
@@ -365,6 +365,8 @@ class GudangController extends Controller
             'lokasi'      => 'nullable|string|max:100',
             'kategori_id' => 'nullable|exists:kategori,id',
         ]);
+        $data['ukuran'] = ($data['ukuran'] ?? '') !== '' ? $data['ukuran'] : 'N/A';
+
         $barang->update($data);
         LogAktivitas::create(['aksi'=>'edit_barang','entitas'=>'barang','keterangan'=>$barang->nama_barang]);
         return redirect('/')->with('ok', 'Barang diperbarui.');
