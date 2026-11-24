@@ -46,10 +46,14 @@ class GudangController extends Controller
         $kategori = Kategori::orderBy('nama_kategori')->get();
         $lowStock = Barang::orderBy('stok_baik')->get()->filter(fn ($b) => $b->statusStok() !== 'aman')->values();
 
-        // Ringkasan: total barang hilang dari semua pengembalian
-        $totalHilang = DetailPengembalian::sum('jumlah_hilang');
-        $totalKembali = DetailPengembalian::sum('jumlah_kembali');
-        $totalKeluar = DetailAcara::sum('jumlah_keluar');
+        // Ringkasan: hanya transaksi yang masih aktif
+        // (pengembalian yang di-undo tidak dihitung, acara batal tidak dihitung)
+        $totalHilang = DetailPengembalian::whereHas('pengembalian', fn ($q) => $q->whereNull('deleted_at'))
+            ->sum('jumlah_hilang');
+        $totalKembali = DetailPengembalian::whereHas('pengembalian', fn ($q) => $q->whereNull('deleted_at'))
+            ->sum('jumlah_kembali');
+        $totalKeluar = DetailAcara::whereHas('acara', fn ($q) => $q->where('status', '!=', 'batal'))
+            ->sum('jumlah_keluar');
 
         $keluarMap = $this->keluarMap();
 
