@@ -19,6 +19,10 @@
 <body>
 <div class="wrap">
   <div class="card">
+    @if($b->foto)
+      <img src="{{ asset('storage/'.$b->foto) }}" alt="Foto {{ $b->nama_barang }}"
+           style="width:100%;max-height:240px;object-fit:cover;border-radius:12px;margin-bottom:12px">
+    @endif
     <h1>{{ $b->nama_barang }}</h1>
     <div class="muted">{{ $b->lokasi ?: 'tanpa lokasi' }}</div>
     @if($b->ukuran)

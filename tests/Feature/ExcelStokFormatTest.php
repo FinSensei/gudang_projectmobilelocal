@@ -32,17 +32,21 @@ class ExcelStokFormatTest extends TestCase
         $this->assertSame('Kode Barang', $header[1]);
         $this->assertSame('Nama Barang', $header[2]);
         $this->assertSame('Photo',       $header[3]);
-        $this->assertSame('Jumlah',      $header[4]);
-        $this->assertSame('Ukuran',      $header[5]);
-        $this->assertSame('Keterangan',  $header[6]);
+        $this->assertSame('Total Stok',  $header[4]);
+        $this->assertSame('Stok Baik',   $header[5]);
+        $this->assertSame('Stok Rusak',  $header[6]);
+        $this->assertSame('Ukuran',      $header[7]);
+        $this->assertSame('Keterangan',  $header[8]);
 
         // data mulai baris 4
         $this->assertSame(1,               (int) $rows[3][0]);
         $this->assertSame('PLW-BL-001',    $rows[3][1]);
         $this->assertSame('Toples saus',    $rows[3][2]);
         $this->assertSame('N/A',           $rows[3][3]);
-        $this->assertSame(193,             (int) $rows[3][4]);
-        $this->assertSame('D.10.5 x T.10', $rows[3][5]);
+        $this->assertSame(193,             (int) $rows[3][4]);   // Total = baik+rusak
+        $this->assertSame(193,             (int) $rows[3][5]);   // Baik
+        $this->assertSame(0,               (int) $rows[3][6]);   // Rusak
+        $this->assertSame('D.10.5 x T.10', $rows[3][7]);
     }
 
     public function test_baris_datanya_mengurut_dari_no_1(): void
@@ -61,6 +65,6 @@ class ExcelStokFormatTest extends TestCase
         Barang::create(['nama_barang'=>'A','satuan'=>'pcs','kode_qr'=>'K1','stok_total'=>10,'stok_baik'=>7,'stok_rusak'=>3]);
 
         $rows = $this->loadRows($this->get('/stok/excel'));
-        $this->assertStringContainsString('rusak 3', (string) $rows[3][6]);
+        $this->assertSame(3, (int) $rows[3][6], 'kolom Stok Rusak = 3');
     }
 }

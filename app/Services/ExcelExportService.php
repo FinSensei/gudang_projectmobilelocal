@@ -147,16 +147,16 @@ class ExcelExportService
 
         $headerRow = 3;
         $sheet->fromArray([
-            'No', 'Kode Barang', 'Nama Barang', 'Photo', 'Jumlah', 'Ukuran', 'Keterangan',
+            'No', 'Kode Barang', 'Nama Barang', 'Photo',
+            'Total Stok', 'Stok Baik', 'Stok Rusak', 'Ukuran', 'Keterangan',
         ], null, 'A'.$headerRow);
-        $this->styleHeader($sheet, "A{$headerRow}:G{$headerRow}");
+        $this->styleHeader($sheet, "A{$headerRow}:I{$headerRow}");
 
         $row = $headerRow + 1;
         $no = 0;
         Barang::orderBy('nama_barang')->get()->each(function ($b) use ($sheet, &$row, &$no) {
             $no++;
             $ket = [];
-            if ($b->stok_rusak > 0) $ket[] = "rusak {$b->stok_rusak}";
             if ($b->stokKeluar() > 0) $ket[] = "keluar {$b->stokKeluar()}";
             if ($b->statusStok() !== 'aman') $ket[] = $b->statusStok();
 
@@ -165,20 +165,22 @@ class ExcelExportService
                 $b->kode_qr,
                 $b->nama_barang,
                 $b->foto ? basename($b->foto) : 'N/A',
-                $b->stok_total,
+                $b->stok_baik + $b->stok_rusak,   // Total Stok = baik + rusak
+                $b->stok_baik,
+                $b->stok_rusak,
                 $b->ukuran ?: 'N/A',
                 $ket ? implode(', ', $ket) : '',
             ], null, 'A'.$row);
             $row++;
         });
 
-        $this->styleBody($sheet, $headerRow + 1, $row - 1, 7);
+        $this->styleBody($sheet, $headerRow + 1, $row - 1, 9);
 
-        // kolom Jumlah rata kanan
-        $sheet->getStyle('E'.($headerRow+1).':E'.($row-1))
+        // kolom angka rata kanan
+        $sheet->getStyle('E'.($headerRow+1).':G'.($row-1))
             ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-        for ($c = 'A'; $c <= 'G'; $c++) {
+        for ($c = 'A'; $c <= 'I'; $c++) {
             $sheet->getColumnDimension($c)->setAutoSize(true);
         }
 

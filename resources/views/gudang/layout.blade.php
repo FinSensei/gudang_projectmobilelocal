@@ -99,6 +99,15 @@
 <body>
 <header>
   <span class="title">Gudang</span>
+  @auth
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+      <span style="font-size:13px;color:var(--mut)">{{ auth()->user()->name }}</span>
+      <form method="POST" action="/logout" style="margin:0">
+        @csrf
+        <button type="submit" class="sec" style="min-height:36px;margin:0;width:auto;padding:8px 12px;font-size:13px">Keluar</button>
+      </form>
+    </div>
+  @endauth
 </header>
 <div class="wrap">
   @if(session('ok'))<div class="msg ok">{{ session('ok') }}</div>@endif
@@ -107,6 +116,7 @@
 
   @auth
     @if(auth()->user()->role === 'admin')
+      {{-- Baris 1: menu utama --}}
       <nav>
         <a href="/">Beranda</a>
         <a href="/acara">Acara</a>
@@ -115,32 +125,19 @@
         <a href="/restock">Stok</a>
       </nav>
 
-      <nav style="grid-template-columns:repeat(4,1fr);margin:0 0 14px">
-        <a href="/log" style="min-height:42px;font-size:13px">Log</a>
-        <a href="/qr" style="min-height:42px;font-size:13px">QR</a>
-        <a href="/kategori" style="min-height:42px;font-size:13px">Kategori</a>
-        <a href="/barang" style="min-height:42px;font-size:13px">Tambah</a>
-      </nav>
-
-      <nav style="grid-template-columns:repeat(2,1fr);margin:0 0 14px">
-        <a href="/users" style="min-height:42px;font-size:13px">Pengguna</a>
-        <form method="POST" action="/logout" style="margin:0">
-          @csrf
-          <button type="submit" class="sec" style="min-height:42px;margin:0;width:100%;font-size:13px">Keluar ({{ auth()->user()->name }})</button>
-        </form>
+      {{-- Baris 2: alat admin --}}
+      <nav style="grid-template-columns:repeat(5,1fr);margin:0 0 14px">
+        <a href="/barang" style="min-height:42px;font-size:12px">Tambah</a>
+        <a href="/kategori" style="min-height:42px;font-size:12px">Kategori</a>
+        <a href="/log" style="min-height:42px;font-size:12px">Log</a>
+        <a href="/qr" style="min-height:42px;font-size:12px">QR</a>
+        <a href="/users" style="min-height:42px;font-size:12px">Pengguna</a>
       </nav>
     @else
       {{-- Pekerja: hanya scan kamera & detail hasil scan --}}
       <nav style="grid-template-columns:1fr">
         <a href="/scan">Scan QR Barang</a>
       </nav>
-      <nav style="grid-template-columns:1fr;margin:0 0 14px">
-        <form method="POST" action="/logout" style="margin:0">
-          @csrf
-          <button type="submit" class="sec" style="min-height:42px;margin:0;width:100%;font-size:13px">Keluar ({{ auth()->user()->name }})</button>
-        </form>
-      </nav>
-      <p class="hint" style="text-align:center;margin-top:-6px">Pekerja hanya bisa melihat stok via QR. Hubungi admin untuk mengubah data.</p>
     @endif
   @endauth
 

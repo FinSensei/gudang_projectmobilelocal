@@ -3,7 +3,7 @@
 @section('content')
 <div class="card">
   <h2>Edit barang</h2>
-  <form method="POST" action="/barang/{{ $barang->id }}">
+  <form method="POST" action="/barang/{{ $barang->id }}" enctype="multipart/form-data">
     @csrf
     @method('PUT')
     <label>Nama barang</label>
@@ -26,6 +26,17 @@
         <option value="{{ $k->id }}" {{ $barang->kategori_id == $k->id ? 'selected' : '' }}>{{ $k->nama_kategori }}</option>
       @endforeach
     </select>
+
+    <label>Foto barang</label>
+    @if($barang->foto)
+      <div style="margin:6px 0">
+        <img src="{{ asset('storage/'.$barang->foto) }}" alt="Foto {{ $barang->nama_barang }}"
+             style="width:100%;max-width:220px;border-radius:12px;border:1px solid var(--bd)">
+        <div class="muted" style="margin-top:4px">Foto saat ini — upload baru untuk mengganti</div>
+      </div>
+    @endif
+    <input name="foto" type="file" accept="image/*" capture="environment">
+    <p class="hint">JPG/PNG, maks 2MB. Di HP bisa langsung ambil foto dari kamera.</p>
 
     <button type="submit">Simpan perubahan</button>
     <a href="/" class="back">Batal</a>

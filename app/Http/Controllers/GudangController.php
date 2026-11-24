@@ -13,6 +13,7 @@ use App\Services\PengembalianService;
 use App\Services\CheckoutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class GudangController extends Controller
@@ -364,8 +365,21 @@ class GudangController extends Controller
             'ukuran'      => 'nullable|string|max:50',
             'lokasi'      => 'nullable|string|max:100',
             'kategori_id' => 'nullable|exists:kategori,id',
+            'foto'        => 'nullable|image|max:2048',
         ]);
+
         $data['ukuran'] = ($data['ukuran'] ?? '') !== '' ? $data['ukuran'] : 'N/A';
+
+        // Upload foto baru (opsional)
+        if ($request->hasFile('foto')) {
+            // hapus foto lama
+            if ($barang->foto && Storage::disk('public')->exists($barang->foto)) {
+                Storage::disk('public')->delete($barang->foto);
+            }
+            $data['foto'] = $request->file('foto')->store('barang', 'public');
+        } else {
+            unset($data['foto']);
+        }
 
         $barang->update($data);
         LogAktivitas::create(['aksi'=>'edit_barang','entitas'=>'barang','keterangan'=>$barang->nama_barang]);
