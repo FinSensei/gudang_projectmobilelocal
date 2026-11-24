@@ -99,11 +99,6 @@
 <body>
 <header>
   <span class="title">Gudang</span>
-  @auth
-    @if(auth()->user()->role === 'admin')
-      <a href="/qr" style="margin-left:auto;font-size:15px;color:var(--acc);text-decoration:none;font-weight:700">Kode QR</a>
-    @endif
-  @endauth
 </header>
 <div class="wrap">
   @if(session('ok'))<div class="msg ok">{{ session('ok') }}</div>@endif
