@@ -56,9 +56,12 @@ class GudangController extends Controller
         $totalKeluar = DetailAcara::whereHas('acara', fn ($q) => $q->where('status', '!=', 'batal'))
             ->sum('jumlah_keluar');
 
+        // Total unit yang dimiliki gudang (baik + rusak, belum termasuk yang keluar)
+        $totalDimiliki = (int) Barang::sum('stok_total');
+
         $keluarMap = $this->keluarMap();
 
-        return view('gudang.dashboard', compact('barang', 'acaraAktif', 'q', 'kategori', 'lowStock', 'totalHilang', 'totalKembali', 'totalKeluar', 'keluarMap'));
+        return view('gudang.dashboard', compact('barang', 'acaraAktif', 'q', 'kategori', 'lowStock', 'totalHilang', 'totalKembali', 'totalKeluar', 'totalDimiliki', 'keluarMap'));
     }
 
     // ---------- Restock ----------
@@ -92,7 +95,7 @@ class GudangController extends Controller
                 'kode_qr'     => 'QR-'.strtoupper(Str::random(8)),
                 'stok_total'  => $data['jumlah'],
                 'stok_baik'   => $data['jumlah'],
-                'stok_rusak'  => 0,
+                'stok_rusak_ringan' => 0, 'stok_rusak_berat' => 0,
             ]);
             LogAktivitas::create(['aksi'=>'barang_baru','entitas'=>'barang','keterangan'=>"{$b->nama_barang} +{$data['jumlah']}"]);
             return back()->with('ok', "Barang baru {$b->nama_barang} dibuat, stok {$data['jumlah']}");
@@ -107,16 +110,21 @@ class GudangController extends Controller
         $data = $request->validate([
             'barang_id' => 'required|exists:barang,id',
             'jumlah'    => 'required|integer|min:1',
+            'tingkat'   => 'required|in:ringan,berat',
         ]);
         $b = Barang::findOrFail($data['barang_id']);
         if ($b->stok_baik < $data['jumlah']) {
             return back()->with('err', "Stok baik {$b->nama_barang} hanya {$b->stok_baik}.");
         }
         $b->stok_baik -= $data['jumlah'];
-        $b->stok_rusak += $data['jumlah'];
+        if ($data['tingkat'] === 'berat') {
+            $b->stok_rusak_berat += $data['jumlah'];
+        } else {
+            $b->stok_rusak_ringan += $data['jumlah'];
+        }
         $b->save();
-        LogAktivitas::create(['aksi'=>'rusak','entitas'=>'barang','keterangan'=>"{$b->nama_barang} rusak +{$data['jumlah']}"]);
-        return back()->with('ok', "{$b->nama_barang} ditandai rusak {$data['jumlah']}");
+        LogAktivitas::create(['aksi'=>'rusak','entitas'=>'barang','keterangan'=>"{$b->nama_barang} rusak {$data['tingkat']} +{$data['jumlah']}"]);
+        return back()->with('ok', "{$b->nama_barang} ditandai rusak {$data['tingkat']} {$data['jumlah']}");
     }
 
     // ---------- Acara (keluar) ----------
@@ -124,6 +132,31 @@ class GudangController extends Controller
     {
         $barang = Barang::where('stok_baik','>',0)->orderBy('nama_barang')->get();
         return view('gudang.acara', compact('barang'));
+    }
+
+    /**
+     * Batas reservasi: satu item tidak boleh meminta lebih dari stok baik.
+     * Dua reservasi BORNHYA boleh bersaing (stok belum dipotong), tapi satu
+     * reservasi tidak boleh memesan barang yang jelas tidak ada.
+     *
+     * @return string|null pesan error, atau null kalau lolos
+     */
+    private function cekBatasStok(array $items): ?string
+    {
+        $gagal = [];
+        foreach ($items as $item) {
+            $b = Barang::find($item['barang_id'] ?? 0);
+            if (!$b) {
+                continue;
+            }
+            if ((int) ($item['jumlah'] ?? 0) > (int) $b->stok_baik) {
+                $gagal[] = "{$b->nama_barang} (baik {$b->stok_baik}, diminta {$item['jumlah']})";
+            }
+        }
+
+        return $gagal
+            ? 'Jumlah melebihi stok baik: ' . implode(', ', $gagal) . '. Kurangi jumlahnya atau tambah stok dulu.'
+            : null;
     }
 
     public function acaraStore(Request $request)
@@ -137,22 +170,165 @@ class GudangController extends Controller
             'items.*.jumlah'    => 'required|integer|min:1',
         ]);
 
+        if ($pesan = $this->cekBatasStok($data['items'])) {
+            return back()->withErrors(['items' => $pesan])->withInput();
+        }
+
         try {
             DB::transaction(function () use ($data) {
                 $acara = Acara::create([
                     'nama_acara'       => $data['nama_acara'],
                     'penanggung_jawab' => $data['penanggung_jawab'] ?? null,
                     'tanggal'          => $data['tanggal'] ?? now(),
-                    'status'           => 'aktif',
+                    'status'           => 'reservasi',
                 ]);
-                app(CheckoutService::class)->buat($acara, $data['items']);
-                LogAktivitas::create(['aksi'=>'acara_keluar','entitas'=>'acara','keterangan'=>$acara->nama_acara]);
+                // Reservasi: catat pesanan, TIDAK memotong stok.
+                // Stok baru dipotong saat admin menekan "Konfirmasi".
+                app(CheckoutService::class)->reservasi($acara, $data['items']);
+                LogAktivitas::create(['aksi'=>'acara_reservasi','entitas'=>'acara','keterangan'=>$acara->nama_acara]);
             });
         } catch (\RuntimeException $e) {
             return back()->with('err', $e->getMessage())->withInput();
         }
 
-        return redirect('/')->with('ok', "Acara {$data['nama_acara']} dibuat, barang keluar.");
+        return redirect('/')->with('ok', "Acara {$data['nama_acara']} dibuat sebagai reservasi. Stok belum dipotong — tekan Konfirmasi saat barang akan keluar.");
+    }
+
+    /** True kalau acara sudah punya pengembalian tercatat (data terkunci). */
+    private function sudahAdaPengembalian(Acara $acara): bool
+    {
+        return $acara->pengembalian()->exists();
+    }
+
+    /** Form edit acara (reservasi / aktif). */
+    public function acaraEdit($id)
+    {
+        $acara = Acara::with('detailAcara.barang')->findOrFail($id);
+        $barang = Barang::orderBy('nama_barang')->get();
+
+        if ($this->sudahAdaPengembalian($acara)) {
+            return redirect('/proses')
+                ->with('err', 'Acara ini sudah ada pengembalian tercatat. Data tidak bisa diubah — pakai menu Stok untuk koreksi manual.');
+        }
+
+        return view('gudang.acara_edit', compact('acara', 'barang'));
+    }
+
+    /**
+     * Simpan perubahan acara: nama, tanggal, penanggung jawab, dan daftar barang.
+     * Kalau acara sudah 'aktif', perubahan jumlah barang langsung menyesuaikan stok_baik.
+     * Kalau masih 'reservasi', hanya daftar pesanan yang berubah.
+     */
+    public function acaraUpdate(Request $request, $id)
+    {
+        $acara = Acara::with('detailAcara')->findOrFail($id);
+
+        if ($this->sudahAdaPengembalian($acara)) {
+            return back()
+                ->with('err', 'Acara sudah ada pengembalian. Tidak bisa diubah — pakai menu Stok untuk koreksi manual.')
+                ->withInput();
+        }
+
+        $data = $request->validate([
+            'nama_acara'       => 'required|string|max:100',
+            'tanggal'          => 'nullable|date',
+            'penanggung_jawab' => 'nullable|string|max:100',
+            'items'            => 'nullable|array',
+            'items.*.barang_id' => 'required|exists:barang,id',
+            'items.*.jumlah'    => 'required|integer|min:1',
+        ]);
+
+        // Reservasi: batasi ke stok baik (belum dipotong, jadi pakai baik saat ini)
+        if ($acara->status !== 'aktif') {
+            if ($pesan = $this->cekBatasStok($data['items'] ?? [])) {
+                return back()->withErrors(['items' => $pesan])->withInput();
+            }
+        }
+
+        try {
+            DB::transaction(function () use ($acara, $data) {
+                $acara->nama_acara       = $data['nama_acara'];
+                $acara->tanggal          = $data['tanggal'] ?? $acara->tanggal;
+                $acara->penanggung_jawab = $data['penanggung_jawab'] ?? null;
+                $acara->save();
+
+                $lama = $acara->detailAcara->keyBy('barang_id');
+                $baru = collect($data['items'] ?? [])->keyBy('barang_id');
+                $aktif = $acara->status === 'aktif';
+
+                // Barang yang dikeluarkan dari daftar
+                foreach ($lama as $bid => $d) {
+                    if ($baru->has($bid)) {
+                        continue;
+                    }
+                    if ($aktif) {
+                        $b = Barang::find($bid);
+                        $b->stok_baik += $d->jumlah_keluar;   // kembali ke stok
+                        $b->save();
+                    }
+                    $d->delete();
+                }
+
+                // Barang baru / perubahan jumlah
+                foreach ($baru as $bid => $item) {
+                    $jumlah = (int) $item['jumlah'];
+                    $b = Barang::find($bid);
+
+                    if ($lama->has($bid)) {
+                        $d = $lama[$bid];
+                        $selisih = $jumlah - (int) $d->jumlah_keluar;
+                        if ($aktif) {
+                            if ($selisih > 0 && $b->stok_baik < $selisih) {
+                                throw new \RuntimeException("Stok {$b->nama_barang} tidak cukup (baik {$b->stok_baik}, butuh tambahan {$selisih}).");
+                            }
+                            $b->stok_baik -= $selisih;
+                            $b->save();
+                        }
+                        $d->jumlah_keluar = $jumlah;
+                        $d->save();
+                    } else {
+                        if ($aktif) {
+                            if ($b->stok_baik < $jumlah) {
+                                throw new \RuntimeException("Stok {$b->nama_barang} tidak cukup (baik {$b->stok_baik}, butuh {$jumlah}).");
+                            }
+                            $b->stok_baik -= $jumlah;
+                            $b->save();
+                        }
+                        DetailAcara::create([
+                            'acara_id'     => $acara->id,
+                            'barang_id'    => $bid,
+                            'jumlah_keluar' => $jumlah,
+                        ]);
+                    }
+                }
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('err', $e->getMessage())->withInput();
+        }
+
+        LogAktivitas::create(['aksi'=>'edit_acara','entitas'=>'acara','keterangan'=>$acara->nama_acara]);
+
+        return redirect('/proses')->with('ok', "Acara {$acara->nama_acara} diperbarui.");
+    }
+
+    /** Konfirmasi reservasi: barang keluar dari gudang, stok_baik dipotong. */
+    public function acaraKonfirmasi($id)
+    {
+        $acara = Acara::with('detailAcara')->findOrFail($id);
+
+        if ($acara->status === 'aktif') {
+            return back()->with('err', 'Acara ini sudah dikonfirmasi (barang sudah keluar).');
+        }
+
+        try {
+            app(CheckoutService::class)->konfirmasi($acara);
+        } catch (\RuntimeException $e) {
+            return back()->with('err', $e->getMessage());
+        }
+
+        LogAktivitas::create(['aksi'=>'acara_konfirmasi','entitas'=>'acara','keterangan'=>$acara->nama_acara]);
+
+        return back()->with('ok', "Acara {$acara->nama_acara} dikonfirmasi. Barang keluar dari gudang.");
     }
 
     // ---------- Pengembalian ----------
@@ -170,6 +346,10 @@ class GudangController extends Controller
             'acara_ids.*' => 'exists:acara,id',
             'kembali'     => 'required|array',
             'kembali.*'   => 'integer|min:0',
+            'rusak_ringan'   => 'nullable|array',
+            'rusak_ringan.*' => 'integer|min:0',
+            'rusak_berat'    => 'nullable|array',
+            'rusak_berat.*'  => 'integer|min:0',
         ]);
 
         // Acara yang sudah selesai tidak boleh diproses ulang
@@ -199,13 +379,32 @@ class GudangController extends Controller
         $rows = [];
         foreach ($outMap as $bid => $out) {
             $b = Barang::find($bid);
-            $kembali = (int)($data['kembali'][$bid] ?? 0);
+            $baik   = (int) ($data['kembali'][$bid] ?? 0);
+            $ringan = (int) ($data['rusak_ringan'][$bid] ?? 0);
+            $berat  = (int) ($data['rusak_berat'][$bid] ?? 0);
+
+            // total tidak boleh melebihi keluar
+            $total = $baik + $ringan + $berat;
+            if ($total > $out) {
+                $berat = max(0, $berat - ($total - $out));
+                $total = $baik + $ringan + $berat;
+            }
+            if ($total > $out) {
+                $ringan = max(0, $ringan - ($total - $out));
+                $total = $baik + $ringan + $berat;
+            }
+            if ($total > $out) {
+                $baik = max(0, $baik - ($total - $out));
+            }
+
             $rows[] = [
                 'barang_id'    => $bid,
                 'nama'         => $b->nama_barang,
                 'keluar'       => $out,
-                'kembali'      => $kembali,
-                'hilang'       => max(0, $out - $kembali),
+                'kembali'      => $baik,
+                'ringan'       => $ringan,
+                'berat'        => $berat,
+                'hilang'       => max(0, $out - ($baik + $ringan + $berat)),
             ];
         }
         $totalHilang = array_sum(array_column($rows,'hilang'));
@@ -226,6 +425,10 @@ class GudangController extends Controller
             'acara_ids.*' => 'exists:acara,id',
             'kembali'     => 'required|array',
             'kembali.*'   => 'integer|min:0',
+            'rusak_ringan'   => 'nullable|array',
+            'rusak_ringan.*' => 'integer|min:0',
+            'rusak_berat'    => 'nullable|array',
+            'rusak_berat.*'  => 'integer|min:0',
         ]);
 
         // Acara yang sudah selesai tidak boleh diproses ulang
@@ -262,9 +465,11 @@ class GudangController extends Controller
             });
             foreach ($outMap as $bid => $out) {
                 DetailPengembalian::create([
-                    'pengembalian_id' => $p->id,
-                    'barang_id'       => $bid,
-                    'jumlah_kembali'  => (int) ($data['kembali'][$bid] ?? 0),
+                    'pengembalian_id'    => $p->id,
+                    'barang_id'          => $bid,
+                    'jumlah_kembali'     => (int) ($data['kembali'][$bid] ?? 0),
+                    'jumlah_rusak_ringan'=> (int) ($data['rusak_ringan'][$bid] ?? 0),
+                    'jumlah_rusak_berat' => (int) ($data['rusak_berat'][$bid] ?? 0),
                 ]);
             }
             app(PengembalianService::class)->hitung($p);
@@ -303,7 +508,7 @@ class GudangController extends Controller
                     'kode_qr'     => 'QR-'.strtoupper(Str::random(8)),
                     'stok_total'  => (int) $data['jumlah'][$i],
                     'stok_baik'   => (int) $data['jumlah'][$i],
-                    'stok_rusak'  => 0,
+                    'stok_rusak_ringan' => 0, 'stok_rusak_berat' => 0,
                 ]);
                 LogAktivitas::create(['aksi'=>'barang_baru','entitas'=>'barang','keterangan'=>$barang->nama_barang]);
             }
@@ -467,7 +672,7 @@ class GudangController extends Controller
     // ---------- Dalam proses (barang sedang di event) ----------
     public function prosesIndex(Request $request)
     {
-        $q = Acara::where('status', 'aktif')->with('detailAcara.barang');
+        $q = Acara::whereIn('status', ['reservasi', 'aktif'])->with('detailAcara.barang');
 
         if ($tahun = $request->input('tahun')) {
             $q->whereYear('tanggal', $tahun);

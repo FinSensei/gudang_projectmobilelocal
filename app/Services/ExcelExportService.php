@@ -148,7 +148,7 @@ class ExcelExportService
         $headerRow = 3;
         $sheet->fromArray([
             'No', 'Kode Barang', 'Nama Barang', 'Photo',
-            'Total Stok', 'Stok Baik', 'Stok Rusak', 'Ukuran', 'Keterangan',
+            'Total Stok', 'Stok Baik', 'Rusak Ringan', 'Rusak Berat', 'Keterangan',
         ], null, 'A'.$headerRow);
         $this->styleHeader($sheet, "A{$headerRow}:I{$headerRow}");
 
@@ -165,10 +165,10 @@ class ExcelExportService
                 $b->kode_qr,
                 $b->nama_barang,
                 $b->foto ? basename($b->foto) : 'N/A',
-                $b->stok_baik + $b->stok_rusak,   // Total Stok = baik + rusak
+                $b->stok_baik + $b->stok_rusak_ringan + $b->stok_rusak_berat,  // Total Stok
                 $b->stok_baik,
-                $b->stok_rusak,
-                $b->ukuran ?: 'N/A',
+                $b->stok_rusak_ringan,
+                $b->stok_rusak_berat,
                 $ket ? implode(', ', $ket) : '',
             ], null, 'A'.$row);
             $row++;

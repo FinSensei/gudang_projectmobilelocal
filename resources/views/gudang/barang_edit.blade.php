@@ -2,6 +2,34 @@
 
 @section('content')
 <div class="card">
+  <h2>{{ $barang->nama_barang }}</h2>
+
+  {{-- Kartu stok: 4 angka supaya operator lihat kondisi nyata --}}
+  <div class="stok-grid">
+    <div class="stok-box">
+      <span class="stok-label">Total</span>
+      <b class="stok-num">{{ $barang->stok_total }}</b>
+    </div>
+    <div class="stok-box baik">
+      <span class="stok-label">Stok Baik</span>
+      <b class="stok-num">{{ $barang->stok_baik }}</b>
+    </div>
+    <div class="stok-box ringan">
+      <span class="stok-label">Rusak Ringan</span>
+      <b class="stok-num">{{ $barang->stok_rusak_ringan }}</b>
+    </div>
+    <div class="stok-box berat">
+      <span class="stok-label">Rusak Berat</span>
+      <b class="stok-num">{{ $barang->stok_rusak_berat }}</b>
+    </div>
+  </div>
+  <p class="hint">
+    Sedang keluar: <b>{{ $barang->stokKeluar() }}</b> ·
+    Kondisi: <b>{{ $barang->statusStok() }}</b>
+  </p>
+</div>
+
+<div class="card">
   <h2>Edit barang</h2>
   <form method="POST" action="/barang/{{ $barang->id }}" enctype="multipart/form-data" id="form-edit">
     @csrf

@@ -9,8 +9,8 @@
 <div class="card">
   <h2>Ringkasan</h2>
   <div class="stat" style="margin-bottom:0">
-    <div class="box blue"><div class="n">{{ $totalKeluar }}</div><div class="l">unit keluar</div></div>
-    <div class="box amber"><div class="n">{{ $totalKembali }}</div><div class="l">unit kembali</div></div>
+    <div class="box blue"><div class="n">{{ $totalDimiliki }}</div><div class="l">Total barang dimiliki</div></div>
+    <div class="box {{ $totalHilang > 0 ? 'red' : 'amber' }}"><div class="n">{{ $totalHilang }}</div><div class="l">Total barang hilang</div></div>
   </div>
 </div>
 

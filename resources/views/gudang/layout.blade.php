@@ -129,6 +129,19 @@
   .row > *{min-width:0}
   .row input,.row select,.row button{margin-top:0}
 
+  /* form kembali: baris per barang */
+  .retur-row{border:1px solid var(--bd);border-radius:10px;padding:10px;margin-top:8px;background:#fcfcfd}
+  .retur-nama{display:flex;justify-content:space-between;gap:8px;font-size:15px}
+
+  /* kartu stok: 4 angka kondisi barang */
+  .stok-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .stok-box{background:#f8fafc;border:1px solid var(--bd);border-radius:10px;padding:10px 6px;text-align:center}
+  .stok-label{display:block;font-size:11px;color:var(--mut);margin-bottom:2px;line-height:1.2}
+  .stok-num{font-size:20px}
+  .stok-box.baik .stok-num{color:var(--green)}
+  .stok-box.ringan .stok-num{color:var(--amber)}
+  .stok-box.berat .stok-num{color:var(--red)}
+
   /* ================= Animasi ringan ================= */
   @keyframes gudangFadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   @keyframes gudangPop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
@@ -206,8 +219,7 @@
       </nav>
 
       {{-- Baris 2: alat admin --}}
-      <nav style="grid-template-columns:repeat(5,1fr);margin:0 0 14px">
-        <a href="/barang" style="min-height:42px;font-size:12px">Tambah</a>
+      <nav style="grid-template-columns:repeat(4,1fr);margin:0 0 14px">
         <a href="/kategori" style="min-height:42px;font-size:12px">Kategori</a>
         <a href="/log" style="min-height:42px;font-size:12px">Log</a>
         <a href="/qr" style="min-height:42px;font-size:12px">QR</a>

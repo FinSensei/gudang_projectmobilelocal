@@ -5,12 +5,14 @@
   <h2>Langkah 2 — cek ringkasan</h2>
   <p class="hint">Pastikan angka di bawah benar sebelum disimpan. Angka <span class="hi">merah</span> = hilang.</p>
   <table>
-    <tr><th>Barang</th><th>Keluar</th><th>Kembali</th><th>Hilang</th></tr>
+    <tr><th>Barang</th><th>Keluar</th><th>Baik</th><th>Ringan</th><th>Berat</th><th>Hilang</th></tr>
     @foreach($rows as $r)
       <tr>
         <td>{{ $r['nama'] }}</td>
         <td>{{ $r['keluar'] }}</td>
         <td>{{ $r['kembali'] }}</td>
+        <td>{{ $r['ringan'] ?? 0 }}</td>
+        <td>{{ $r['berat'] ?? 0 }}</td>
         <td class="{{ $r['hilang']>0 ? 'hi' : '' }}">{{ $r['hilang'] }}</td>
       </tr>
     @endforeach
@@ -24,6 +26,8 @@
     @endforeach
     @foreach($rows as $r)
       <input type="hidden" name="kembali[{{ $r['barang_id'] }}]" value="{{ $r['kembali'] }}">
+      <input type="hidden" name="rusak_ringan[{{ $r['barang_id'] }}]" value="{{ $r['ringan'] ?? 0 }}">
+      <input type="hidden" name="rusak_berat[{{ $r['barang_id'] }}]" value="{{ $r['berat'] ?? 0 }}">
     @endforeach
     <input type="hidden" name="tanggal" value="{{ $tanggal }}">
 

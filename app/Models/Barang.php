@@ -12,14 +12,36 @@ class Barang extends Model
     use SoftDeletes;
 
     protected $table = 'barang';
-    protected $fillable = ['kategori_id', 'nama_barang', 'satuan', 'ukuran', 'kode_qr', 'stok_total', 'stok_baik', 'stok_rusak', 'lokasi', 'foto', 'status_kondisi'];
+    protected $fillable = [
+        'kategori_id', 'nama_barang', 'satuan', 'ukuran', 'kode_qr',
+        'stok_total', 'stok_baik', 'stok_rusak_ringan', 'stok_rusak_berat',
+        'lokasi', 'foto', 'status_kondisi',
+    ];
 
     /** Nilai default saat create tanpa menyertakan ukuran */
-    protected $attributes = ['ukuran' => 'N/A'];
+    protected $attributes = [
+        'ukuran'            => 'N/A',
+        'stok_rusak_ringan' => 0,
+        'stok_rusak_berat'  => 0,
+    ];
 
     protected function casts(): array
     {
-        return ['stok_total' => 'integer', 'stok_baik' => 'integer', 'stok_rusak' => 'integer'];
+        return [
+            'stok_total'          => 'integer',
+            'stok_baik'           => 'integer',
+            'stok_rusak_ringan'   => 'integer',
+            'stok_rusak_berat'    => 'integer',
+        ];
+    }
+
+    /**
+     * Total rusak = ringan + berat (turunan, tidak disimpan di DB).
+     * Dipakai view & Excel supaya tidak perlu tahu rinciannya.
+     */
+    public function getStokRusakAttribute(): int
+    {
+        return (int) $this->stok_rusak_ringan + (int) $this->stok_rusak_berat;
     }
 
     public function kategori(): BelongsTo

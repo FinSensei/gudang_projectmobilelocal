@@ -10,7 +10,7 @@ use App\Services\PengembalianService;
 
 /**
  * Simulasi skenario nyata + cek invariant stok.
- * Invariant: stok_total = stok_baik + stok_rusak + stok_keluar
+ * Invariant: stok_total = stok_baik + stok_rusak_ringan + stok_rusak_berat + stok_keluar
  */
 class SimulasiInvarianTest extends TestCase
 {
@@ -18,14 +18,14 @@ class SimulasiInvarianTest extends TestCase
     {
         $b->refresh();
         $keluar = $b->stokKeluar();
-        return $b->stok_total - ($b->stok_baik + $b->stok_rusak + $keluar);
+        return $b->stok_total - ($b->stok_baik + $b->stok_rusak_ringan + $b->stok_rusak_berat + $keluar);
     }
 
     private function b(string $nama, int $total, int $baik = null, int $rusak = 0): Barang
     {
         return Barang::create([
             'nama_barang' => $nama, 'satuan' => 'pcs', 'kode_qr' => 'Q-'.$nama,
-            'stok_total' => $total, 'stok_baik' => $baik ?? $total, 'stok_rusak' => $rusak,
+            'stok_total' => $total, 'stok_baik' => $baik ?? $total, 'stok_rusak_ringan' => $rusak,
         ]);
     }
 
@@ -138,7 +138,7 @@ class SimulasiInvarianTest extends TestCase
         app(PengembalianService::class)->hitung($p);
 
         $b->refresh();
-        $this->assertSame(10, $b->stok_rusak, 'rusak tetap 10');
+        $this->assertSame(10, $b->stok_rusak, 'rusak tetap 10 (ringan)');
         $this->assertSame(88, $b->stok_baik, 'baik 70+18');
         $this->assertSame(0, $this->invariant($b), 'invariant akhir');
     }

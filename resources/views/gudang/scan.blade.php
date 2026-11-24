@@ -29,7 +29,23 @@
       <div class="muted">Ukuran: <b>{{ $b->ukuran }}</b></div>
     @endif
     <div class="big">{{ $b->stok_total }}</div>
-    <div class="muted">stok asli · baik {{ $b->stok_baik }} · rusak {{ $b->stok_rusak }}</div>
+
+    {{-- Rincian kondisi stok --}}
+    <div class="stok-grid">
+      <div class="stok-box baik">
+        <span class="stok-label">Stok Baik</span>
+        <b class="stok-num">{{ $b->stok_baik }}</b>
+      </div>
+      <div class="stok-box ringan">
+        <span class="stok-label">Rusak Ringan</span>
+        <b class="stok-num">{{ $b->stok_rusak_ringan }}</b>
+      </div>
+      <div class="stok-box berat">
+        <span class="stok-label">Rusak Berat</span>
+        <b class="stok-num">{{ $b->stok_rusak_berat }}</b>
+      </div>
+    </div>
+
     <div><span class="badge {{ $b->statusPemakaian()==='sedang digunakan'?'keluar':'' }}">{{ $b->statusPemakaian() }}</span></div>
   </div>
 

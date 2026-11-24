@@ -38,6 +38,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/acara', [GudangController::class, 'acaraForm'])->name('acara');
         Route::post('/acara', [GudangController::class, 'acaraStore']);
+        Route::get('/acara/{id}/edit', [GudangController::class, 'acaraEdit']);
+        Route::put('/acara/{id}', [GudangController::class, 'acaraUpdate']);
+        Route::post('/acara/{id}/konfirmasi', [GudangController::class, 'acaraKonfirmasi']);
         Route::post('/acara/{id}/batalkan', [GudangController::class, 'acaraBatalkan']);
 
         Route::get('/pengembalian', [GudangController::class, 'pengembalianForm'])->name('pengembalian');

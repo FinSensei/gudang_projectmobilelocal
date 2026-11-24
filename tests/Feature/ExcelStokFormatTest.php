@@ -19,7 +19,7 @@ class ExcelStokFormatTest extends TestCase
 
     public function test_header_stok_urutan_no_kode_nama_photo_jumlah_ukuran_keterangan(): void
     {
-        Barang::create(['nama_barang'=>'Toples saus','satuan'=>'pcs','kode_qr'=>'PLW-BL-001','ukuran'=>'D.10.5 x T.10','stok_total'=>193,'stok_baik'=>193,'stok_rusak'=>0,'lokasi'=>'Rak A1']);
+        Barang::create(['nama_barang'=>'Toples saus','satuan'=>'pcs','kode_qr'=>'PLW-BL-001','ukuran'=>'D.10.5 x T.10','stok_total'=>193,'stok_baik'=>193,'stok_rusak_ringan'=>0,'stok_rusak_berat'=>0,'lokasi'=>'Rak A1']);
 
         $res = $this->get('/stok/excel');
         $res->assertOk();
@@ -33,10 +33,10 @@ class ExcelStokFormatTest extends TestCase
         $this->assertSame('Nama Barang', $header[2]);
         $this->assertSame('Photo',       $header[3]);
         $this->assertSame('Total Stok',  $header[4]);
-        $this->assertSame('Stok Baik',   $header[5]);
-        $this->assertSame('Stok Rusak',  $header[6]);
-        $this->assertSame('Ukuran',      $header[7]);
-        $this->assertSame('Keterangan',  $header[8]);
+        $this->assertSame('Stok Baik',    $header[5]);
+        $this->assertSame('Rusak Ringan', $header[6]);
+        $this->assertSame('Rusak Berat',  $header[7]);
+        $this->assertSame('Keterangan',   $header[8]);
 
         // data mulai baris 4
         $this->assertSame(1,               (int) $rows[3][0]);
@@ -45,8 +45,8 @@ class ExcelStokFormatTest extends TestCase
         $this->assertSame('N/A',           $rows[3][3]);
         $this->assertSame(193,             (int) $rows[3][4]);   // Total = baik+rusak
         $this->assertSame(193,             (int) $rows[3][5]);   // Baik
-        $this->assertSame(0,               (int) $rows[3][6]);   // Rusak
-        $this->assertSame('D.10.5 x T.10', $rows[3][7]);
+        $this->assertSame(0,               (int) $rows[3][6]);   // Rusak Ringan
+        $this->assertSame(0,               (int) $rows[3][7]);   // Rusak Berat
     }
 
     public function test_baris_datanya_mengurut_dari_no_1(): void
@@ -62,9 +62,9 @@ class ExcelStokFormatTest extends TestCase
 
     public function test_keterangan_menampilkan_rusak(): void
     {
-        Barang::create(['nama_barang'=>'A','satuan'=>'pcs','kode_qr'=>'K1','stok_total'=>10,'stok_baik'=>7,'stok_rusak'=>3]);
+        Barang::create(['nama_barang'=>'A','satuan'=>'pcs','kode_qr'=>'K1','stok_total'=>10,'stok_baik'=>7,'stok_rusak_ringan'=>3]);
 
         $rows = $this->loadRows($this->get('/stok/excel'));
-        $this->assertSame(3, (int) $rows[3][6], 'kolom Stok Rusak = 3');
+        $this->assertSame(3, (int) $rows[3][6], 'kolom Rusak Ringan = 3');
     }
 }

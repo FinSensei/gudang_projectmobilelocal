@@ -3,7 +3,7 @@
 @section('content')
 <div class="card">
   <h2>Dalam proses</h2>
-  <p class="hint">Barang yang sedang di acara — belum kembali ke gudang.</p>
+  <p class="hint">Barang yang sudah dikonfirmasi keluar, dan reservasi yang belum dipotong stok.</p>
 
   <form method="GET" action="/proses" style="margin-bottom:12px">
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
@@ -23,16 +23,23 @@
   </form>
 
   @if($aktif->isEmpty())
-    <p class="muted">{{ ($tanggal ?? '') !== '' || ($tahun ?? '') !== '' ? 'Tidak ada acara yang cocok dengan filter itu.' : 'Tidak ada acara aktif. Semua barang sudah kembali.' }}</p>
+    <p class="muted">{{ ($tanggal ?? '') !== '' || ($tahun ?? '') !== '' ? 'Tidak ada acara yang cocok dengan filter itu.' : 'Tidak ada acara aktif atau reservasi.' }}</p>
   @else
     @foreach($aktif as $a)
       @php($items = $a->detailAcara)
+      @php($reservasi = $a->status === 'reservasi')
       <div class="item">
         <div class="top">
           <b>{{ $a->nama_acara }}</b>
-          <span class="badge aktif">aktif</span>
+          <span class="badge {{ $reservasi ? 'aktif' : 'selesai' }}">
+            {{ $reservasi ? 'reservasi' : 'aktif' }}
+          </span>
         </div>
-        <div class="muted">{{ $a->tanggal?->format('d M Y') }} · {{ $a->penanggung_jawab ?: 'tanpa penanggung jawab' }}</div>
+        <div class="muted">
+          {{ $a->tanggal?->format('d M Y') }} · {{ $a->penanggung_jawab ?: 'tanpa penanggung jawab' }}
+          @if($reservasi) · <b>stok belum dipotong</b> @endif
+        </div>
+
         <div class="table-scroll fit">
           <table>
             <tr><th>Barang</th><th>Keluar</th></tr>
@@ -44,10 +51,23 @@
             @endif
           </table>
         </div>
+
         <div class="row-actions">
           <a href="/proses/{{ $a->id }}" class="btn sm sec">Detail</a>
-          <a href="/pengembalian" class="btn sm">Catat kembali</a>
-          <form method="POST" action="/acara/{{ $a->id }}/batalkan" style="margin:0" onsubmit="return confirm('Batalkan acara ini? Barang akan kembali ke stok.')">
+          <a href="/acara/{{ $a->id }}/edit" class="btn sm sec">Edit</a>
+
+          @if($reservasi)
+            <form method="POST" action="/acara/{{ $a->id }}/konfirmasi" style="margin:0"
+                  onsubmit="return confirm('Konfirmasi reservasi ini? Stok akan dipotong sekarang.')">
+              @csrf
+              <button type="submit" class="btn sm">Konfirmasi</button>
+            </form>
+          @else
+            <a href="/pengembalian" class="btn sm">Pengembalian</a>
+          @endif
+
+          <form method="POST" action="/acara/{{ $a->id }}/batalkan" style="margin:0"
+                onsubmit="return confirm('Batalkan acara ini? Barang akan kembali ke stok.')">
             @csrf
             <button type="submit" class="btn sm sec" style="color:var(--red);border-color:var(--red)">Batalkan</button>
           </form>

@@ -69,22 +69,21 @@ class SimulasiCelahTest extends TestCase
         ])->assertSessionHasErrors('items');
     }
 
-    // ---------- 6. Checkout melebihi stok -> rollback, stok tidak berubah ----------
+    // ---------- 6. Reservasi > stok : boleh dibuat, tapi KONFIRMASI ditolak ----------
     public function test_checkout_melebihi_stok_rollback(): void
     {
-        $b = Barang::create(['nama_barang'=>'Sendok','satuan'=>'pcs','kode_qr'=>'C1','stok_total'=>10,'stok_baik'=>10,'stok_rusak'=>0]);
+        $b = Barang::create(['nama_barang'=>'Sendok','satuan'=>'pcs','kode_qr'=>'C1','stok_total'=>10,'stok_baik'=>10,'stok_rusak_ringan'=>0,'stok_rusak_berat'=>0]);
 
-        // Controller pakai flash 'err' (bukan withErrors), jadi cek perilakunya:
+        // Reservasi di atas stok baik ditolak sejak awal — tidak ada gunanya
+        // memesan barang yang jelas tidak ada.
         $this->post('/acara', [
             'nama_acara' => 'Berlebih',
             'items' => [['barang_id'=>$b->id, 'jumlah'=>50]],
-        ])->assertRedirect();
+        ])->assertSessionHasErrors('items');
 
         $b->refresh();
         $this->assertSame(10, $b->stok_baik, 'stok TIDAK berubah');
-        $this->assertSame(10, $b->stok_total);
-        // acara tidak dibuat karena transaksi rollback
-        $this->assertSame(0, \App\Models\Acara::count(), 'acara tidak dibuat');
+        $this->assertSame(0, \App\Models\Acara::count(), 'reservasi tidak dibuat');
     }
 
     // ---------- 7. Restock barang yang tidak ada ----------
