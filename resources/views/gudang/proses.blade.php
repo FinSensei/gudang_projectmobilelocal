@@ -4,8 +4,26 @@
 <div class="card">
   <h2>Dalam proses</h2>
   <p class="hint">Barang yang sedang di acara — belum kembali ke gudang.</p>
+
+  <form method="GET" action="/proses" style="margin-bottom:12px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:140px">
+        <label>Tanggal acara</label>
+        <input type="date" name="tanggal" value="{{ $tanggal ?? '' }}">
+      </div>
+      <div style="flex:1;min-width:110px">
+        <label>Tahun</label>
+        <input type="number" name="tahun" value="{{ $tahun ?? '' }}" placeholder="mis. 2026" min="2000" max="2100">
+      </div>
+      <div class="row-actions" style="margin:0">
+        <button type="submit" style="margin:0">Terapkan</button>
+        <a href="/proses" class="btn sm sec">Reset</a>
+      </div>
+    </div>
+  </form>
+
   @if($aktif->isEmpty())
-    <p class="muted">Tidak ada acara aktif. Semua barang sudah kembali.</p>
+    <p class="muted">{{ ($tanggal ?? '') !== '' || ($tahun ?? '') !== '' ? 'Tidak ada acara yang cocok dengan filter itu.' : 'Tidak ada acara aktif. Semua barang sudah kembali.' }}</p>
   @else
     @foreach($aktif as $a)
       @php($items = $a->detailAcara)

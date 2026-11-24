@@ -2,7 +2,10 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f4f6">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111827">
+<meta name="color-scheme" content="light">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Gudang</title>
 <style>
@@ -16,11 +19,36 @@
     --purple:#7c3aed;--purple-bg:#ede9fe;
   }
   *{box-sizing:border-box}
+
+  /* ===== mobile-native: platform layer ===== */
+  html{
+    -webkit-tap-highlight-color: transparent;   /* buang kilat abu-abu saat tap */
+    -webkit-text-size-adjust: 100%;             /* cegah font membengkak di landscape */
+    overscroll-behavior: none;                  /* cegah pull-to-refresh merampas scroll */
+  }
+
   body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg);color:var(--fg);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
-  .wrap{max-width:640px;margin:0 auto;padding:16px}
+    background:var(--bg);color:var(--fg);font-size:17px;line-height:1.45;
+    overscroll-behavior:none}
+
+  /* input minimal 16px -> iOS tidak zoom saat fokus */
+  input,select,textarea{font-size:17px}
+
+  /* tap langsung diproses, tanpa delay 300ms */
+  button,a,[role="button"],.btn{touch-action: manipulation}
+
+  /* teks tombol jangan bisa diseleksi / callout saat tekan lama */
+  button,[role="button"],.btn,.tab,.chip{
+    user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  }
+
+  .wrap{max-width:640px;margin:0 auto;padding:16px;
+    padding-left:calc(16px + env(safe-area-inset-left, 0px));
+    padding-right:calc(16px + env(safe-area-inset-right, 0px))}
+
   header{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--card);
-    border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10}
+    border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;
+    padding-top:calc(14px + env(safe-area-inset-top, 0px))}
   header .title{font-weight:700;font-size:20px}
   nav{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:14px 0}
   nav a{min-height:50px;display:flex;align-items:center;justify-content:center;text-align:center;
@@ -81,7 +109,8 @@
   .btn.sm{width:auto;min-height:0;padding:9px 14px;margin:0;font-size:15px;display:inline-block;text-align:center;white-space:nowrap}
   .btn.sm.sec{background:#fff;color:var(--fg);border:1px solid var(--bd)}
   a.btn{display:block;text-align:center}
-  .table-scroll{overflow:auto;max-height:42vh;-webkit-overflow-scrolling:touch;margin-top:8px;border:1px solid var(--bd);border-radius:10px}
+  .table-scroll{overflow:auto;max-height:42vh;-webkit-overflow-scrolling:touch;margin-top:8px;border:1px solid var(--bd);border-radius:10px;
+    overscroll-behavior:contain}
   .table-scroll table{width:100%;min-width:0;table-layout:fixed;margin:0}
   .table-scroll th,.table-scroll td{padding:8px 5px;font-size:14px;overflow-wrap:break-word;word-wrap:break-word}
   .table-scroll.fit th:first-child,.table-scroll.fit td:first-child{width:72%}
@@ -94,6 +123,57 @@
   td.hi{color:var(--red);font-weight:700}
   .row-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
   .row-actions .btn{margin-top:0}
+
+  /* baris form: cari + kategori + tombol */
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .row > *{min-width:0}
+  .row input,.row select,.row button{margin-top:0}
+
+  /* ================= Animasi ringan ================= */
+  @keyframes gudangFadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes gudangPop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+
+  /* kartu & item masuk dengan fade halus */
+  .card{animation:gudangFadeUp .32s cubic-bezier(.22,1,.36,1) both}
+  .item{animation:gudangFadeUp .3s cubic-bezier(.22,1,.36,1) both}
+  .item:nth-child(1){animation-delay:.02s}
+  .item:nth-child(2){animation-delay:.06s}
+  .item:nth-child(3){animation-delay:.10s}
+  .item:nth-child(4){animation-delay:.14s}
+  .item:nth-child(n+5){animation-delay:.18s}
+
+  /* tombol: hover naik, ditekan menyusut */
+  button,.btn{transition:transform .12s ease, box-shadow .18s ease, background-color .18s ease, border-color .18s ease}
+  button:active,.btn:active{transform:scale(.97)}
+  button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible{
+    outline:2px solid var(--acc);outline-offset:2px;
+  }
+
+  /* nav */
+  nav a{transition:background-color .16s ease, color .16s ease, transform .12s ease}
+  nav a:active{transform:scale(.97)}
+
+  /* item list */
+  .item{transition:box-shadow .18s ease, border-color .18s ease}
+
+  /* SEMUA :hover di dalam sini — kalau tidak, hover "nyangkut" setelah tap di HP */
+  @media (hover: hover) and (pointer: fine){
+    button:hover,.btn:hover{filter:brightness(1.03)}
+    nav a:hover{background:#eef2f7}
+    .item:hover{border-color:#d3d9e2;box-shadow:0 2px 10px rgba(17,24,39,.06)}
+  }
+
+  /* badge & angka hilang muncul */
+  .badge,.hi{animation:gudangPop .2s ease both}
+
+  /* hormati pengaturan reduce-motion */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.001ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.001ms !important;
+    }
+  }
 </style>
 </head>
 <body>

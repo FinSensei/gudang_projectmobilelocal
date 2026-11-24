@@ -86,6 +86,11 @@ class LoginController extends Controller
             'password' => 'nullable|string|min:6',
         ]);
 
+        // Admin tidak boleh menurunkan role akunnya sendiri
+        if ($user->id === auth()->id() && $data['role'] !== $user->role) {
+            return back()->with('err', 'Anda tidak bisa mengubah role akun sendiri.')->withInput();
+        }
+
         $user->name  = $data['name'];
         $user->email = $data['email'];
         $user->role  = $data['role'];

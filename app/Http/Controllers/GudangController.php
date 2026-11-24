@@ -131,7 +131,7 @@ class GudangController extends Controller
         $data = $request->validate([
             'nama_acara'   => 'required|string|max:100',
             'penanggung_jawab' => 'nullable|string|max:100',
-            'tanggal'      => 'nullable|date',
+            'tanggal'      => 'nullable|date|after_or_equal:today',
             'items'        => 'required|array|min:1',
             'items.*.barang_id' => 'required|exists:barang,id',
             'items.*.jumlah'    => 'required|integer|min:1',
@@ -366,17 +366,19 @@ class GudangController extends Controller
             'lokasi'      => 'nullable|string|max:100',
             'kategori_id' => 'nullable|exists:kategori,id',
             'foto'        => 'nullable|image|max:2048',
+            'foto_galeri' => 'nullable|image|max:2048',
         ]);
 
         $data['ukuran'] = ($data['ukuran'] ?? '') !== '' ? $data['ukuran'] : 'N/A';
 
-        // Upload foto baru (opsional)
-        if ($request->hasFile('foto')) {
-            // hapus foto lama
+        // Upload foto baru dari kamera ATAU galeri (salah satu)
+        $fotoBaru = $request->file('foto') ?? $request->file('foto_galeri');
+        if ($fotoBaru) {
             if ($barang->foto && Storage::disk('public')->exists($barang->foto)) {
                 Storage::disk('public')->delete($barang->foto);
             }
-            $data['foto'] = $request->file('foto')->store('barang', 'public');
+            $data['foto'] = $fotoBaru->store('barang', 'public');
+            $this->compressFoto($data['foto']);
         } else {
             unset($data['foto']);
         }
@@ -456,10 +458,23 @@ class GudangController extends Controller
     }
 
     // ---------- Dalam proses (barang sedang di event) ----------
-    public function prosesIndex()
+    public function prosesIndex(Request $request)
     {
-        $aktif = Acara::where('status', 'aktif')->with('detailAcara.barang')->orderByDesc('id')->get();
-        return view('gudang.proses', compact('aktif'));
+        $q = Acara::where('status', 'aktif')->with('detailAcara.barang');
+
+        if ($tahun = $request->input('tahun')) {
+            $q->whereYear('tanggal', $tahun);
+        }
+        if ($tanggal = $request->input('tanggal')) {
+            $q->whereDate('tanggal', $tanggal);
+        }
+
+        $aktif = $q->orderByDesc('id')->get();
+
+        return view('gudang.proses', compact('aktif') + [
+            'tahun'   => $request->input('tahun'),
+            'tanggal' => $request->input('tanggal'),
+        ]);
     }
 
     public function prosesDetail($id)
@@ -527,14 +542,31 @@ class GudangController extends Controller
     {
         $q = $request->query('q');
 
-        $pengembalian = Pengembalian::with(['acara', 'detailPengembalian.barang'])
-            ->when($q, function ($query) use ($q) {
-                $query->whereHas('acara', fn ($sub) => $sub->where('nama_acara', 'like', "%{$q}%"))
-                      ->orWhereHas('detailPengembalian.barang', fn ($sub) => $sub->where('nama_barang', 'like', "%{$q}%"));
-            })
-            ->orderByDesc('id')->get();
+        $pengembalian = $this->applyTanggalFilter(
+            Pengembalian::with(['acara', 'detailPengembalian.barang'])
+                ->when($q, function ($query) use ($q) {
+                    $query->whereHas('acara', fn ($sub) => $sub->where('nama_acara', 'like', "%{$q}%"))
+                          ->orWhereHas('detailPengembalian.barang', fn ($sub) => $sub->where('nama_barang', 'like', "%{$q}%"));
+                })
+                ->orderByDesc('id'),
+            $request
+        )->get();
 
-        return view('gudang.riwayat', compact('pengembalian', 'q'));
+        $totalKeluar = 0; $totalKembali = 0; $totalHilang = 0;
+        foreach ($pengembalian as $p) {
+            foreach ($p->detailPengembalian as $d) {
+                $totalKeluar  += $d->jumlah_keluar;
+                $totalKembali += $d->jumlah_kembali;
+                $totalHilang  += $d->jumlah_hilang;
+            }
+        }
+
+        $dari   = $request->input('dari');
+        $sampai = $request->input('sampai');
+
+        return view('gudang.riwayat', compact(
+            'pengembalian', 'q', 'totalKeluar', 'totalKembali', 'totalHilang', 'dari', 'sampai'
+        ));
     }
 
     public function riwayatDetail($id)
@@ -548,16 +580,73 @@ class GudangController extends Controller
         return view('gudang.log', compact('log'));
     }
 
-    public function riwayatPdf()
+    /** Kecilkan foto agar cepat dimuat. Maks 800px, JPEG 72%. */
+    private function compressFoto(string $path): void
     {
-        $pengembalian = Pengembalian::with(['acara', 'detailPengembalian.barang'])->orderByDesc('id')->get();
+        $full = Storage::disk('public')->path($path);
+        if (!is_file($full)) {
+            return;
+        }
+
+        $size = @getimagesize($full);
+        if (!$size) {
+            return;
+        }
+        [$w, $h] = [$size[0], $size[1]];
+
+        $max = 800;
+        if ($w <= $max && $h <= $max) {
+            return;   // sudah kecil, biarkan
+        }
+
+        $src = @imagecreatefromstring(file_get_contents($full));
+        if (!$src) {
+            return;
+        }
+
+        $ratio = min($max / $w, $max / $h);
+        $nw = max(1, (int) round($w * $ratio));
+        $nh = max(1, (int) round($h * $ratio));
+
+        $dst = imagecreatetruecolor($nw, $nh);
+        // isi putih dulu (jaga PNG transparan jadi putih, bukan hitam)
+        imagefilledrectangle($dst, 0, 0, $nw, $nh, imagecolorallocate($dst, 255, 255, 255));
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+
+        imagejpeg($dst, $full, 72);
+
+        imagedestroy($src);
+        imagedestroy($dst);
+    }
+
+    /** Terapkan filter tanggal (dari/sampai) ke query pengembalian. */
+    private function applyTanggalFilter($query, Request $request)
+    {
+        $dari = $request->input('dari');
+        $sampai = $request->input('sampai');
+        if ($dari)  $query->whereDate('tanggal_pulang', '>=', $dari);
+        if ($sampai) $query->whereDate('tanggal_pulang', '<=', $sampai);
+        return $query;
+    }
+
+    public function riwayatPdf(Request $request)
+    {
+        $pengembalian = $this->applyTanggalFilter(
+            Pengembalian::with(['acara','detailPengembalian.barang'])->orderByDesc('id'),
+            $request
+        )->get();
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('gudang.pdf', compact('pengembalian'));
         return $pdf->download('rekap-pengembalian.pdf');
     }
 
-    public function riwayatExcel()
+    public function riwayatExcel(Request $request)
     {
-        $xlsx = app(\App\Services\ExcelExportService::class)->riwayat();
+        $pengembalian = $this->applyTanggalFilter(
+            Pengembalian::with(['acara','detailPengembalian.barang'])->orderByDesc('id'),
+            $request
+        )->get();
+
+        $xlsx = app(\App\Services\ExcelExportService::class)->riwayat($pengembalian);
         $filename = 'rekap-pengembalian-'.now()->format('Y-m-d').'.xlsx';
         return response()->streamDownload(function () use ($xlsx) {
             $xlsx->save('php://output');

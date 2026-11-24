@@ -14,7 +14,8 @@
     <input name="penanggung_jawab" placeholder="nama (opsional)">
 
     <label>Tanggal</label>
-    <input name="tanggal" type="date" value="{{ now()->toDateString() }}">
+    <input name="tanggal" type="date" value="{{ now()->toDateString() }}" min="{{ now()->toDateString() }}">
+    <p class="hint">Tidak bisa memilih tanggal sebelum hari ini.</p>
 
     <label>Barang yang dibawa</label>
     <button type="button" class="sec" onclick="toggleAdd()">+ Tambah barang</button>

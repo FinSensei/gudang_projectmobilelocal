@@ -3,7 +3,7 @@
 @section('content')
 <div class="card">
   <h2>Edit barang</h2>
-  <form method="POST" action="/barang/{{ $barang->id }}" enctype="multipart/form-data">
+  <form method="POST" action="/barang/{{ $barang->id }}" enctype="multipart/form-data" id="form-edit">
     @csrf
     @method('PUT')
     <label>Nama barang</label>
@@ -28,55 +28,89 @@
     </select>
 
     <label>Foto barang</label>
+
+    {{-- Foto saat ini --}}
     @if($barang->foto)
       <div style="margin:6px 0">
         <img src="{{ asset('storage/'.$barang->foto) }}" alt="Foto {{ $barang->nama_barang }}"
              style="width:100%;max-width:220px;border-radius:12px;border:1px solid var(--bd)">
-        <div class="muted" style="margin-top:4px">Foto saat ini — upload baru untuk mengganti</div>
+        <div class="muted" style="margin-top:4px">Foto saat ini</div>
       </div>
     @endif
-    <input name="foto" type="file" accept="image/*" capture="environment">
-    <p class="hint">JPG/PNG, maks 2MB. Di HP bisa langsung ambil foto dari kamera.</p>
+
+    {{-- Dua tombol: kamera langsung / pilih dari galeri --}}
+    <div class="row-actions" style="margin:10px 0">
+      <label class="btn sm sec" for="foto-kamera" style="cursor:pointer;margin:0">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;stroke:currentColor;fill:none;stroke-width:2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        Ambil Foto
+      </label>
+
+      <label class="btn sm sec" for="foto-galeri" style="cursor:pointer;margin:0">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;stroke:currentColor;fill:none;stroke-width:2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+        Pilih dari Galeri
+      </label>
+    </div>
+
+    {{-- Input 1: kamera langsung (capture) --}}
+    <input id="foto-kamera" name="foto" type="file" accept="image/*" capture="environment"
+           style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden">
+
+    {{-- Input 2: galeri / file --}}
+    <input id="foto-galeri" name="foto_galeri" type="file" accept="image/*"
+           style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden">
+
+    {{-- Preview --}}
+    <div id="preview" style="margin:10px 0;display:none">
+      <img id="preview-img" src="" alt="Preview"
+           style="width:100%;max-width:220px;border-radius:12px;border:1px solid var(--bd)">
+      <div class="muted" style="margin-top:4px">Preview foto baru</div>
+    </div>
+
+    <p class="hint">JPG/PNG, maks 2MB. "Ambil Foto" buka kamera, "Pilih dari Galeri" buka file.</p>
 
     <button type="submit">Simpan perubahan</button>
     <a href="/" class="back">Batal</a>
   </form>
-
-  <hr style="border:0;border-top:1px solid var(--bd);margin:18px 0">
-
-  <div class="card" style="margin:0 0 12px">
-    <h2>Tambah stok</h2>
-    <p class="hint">Kalau ada barang baru masuk, tambahkan jumlahnya di sini.</p>
-    <form method="POST" action="/barang/{{ $barang->id }}/tambah">
-      @csrf
-      <label>Jumlah yang ditambahkan</label>
-      <input name="jumlah" type="number" min="1" value="1" required>
-      <button type="submit">Tambah stok</button>
-    </form>
-  </div>
-
-  <div class="card" style="margin:0 0 12px">
-    <h2>Kurangi jumlah</h2>
-    <p class="hint">Kalau ada barang yang hilang/rusak, kurangi stoknya di sini.</p>
-    <form method="POST" action="/barang/{{ $barang->id }}/kurangi">
-      @csrf
-      <label>Jumlah yang dikurangi</label>
-      <input name="jumlah" type="number" min="1" value="1" required>
-      <button type="submit">Kurangi stok</button>
-    </form>
-  </div>
-
-  <div class="card" style="margin:0">
-    <h2>Hapus total</h2>
-    @if($barang->stokKeluar() > 0)
-      <p class="hint" style="color:var(--red)">Barang ini sedang digunakan di acara aktif, tidak bisa dihapus.</p>
-    @else
-      <p class="hint">Hapus seluruh barang ini dari katalog.</p>
-      <form method="POST" action="/barang/{{ $barang->id }}" onsubmit="return confirm('Hapus total barang ini?')">
-        @csrf @method('DELETE')
-        <button type="submit" class="sec" style="color:var(--red);border-color:var(--red)">Hapus total</button>
-      </form>
-    @endif
-  </div>
 </div>
+
+<script>
+(function () {
+  const kamera = document.getElementById('foto-kamera');
+  const galeri = document.getElementById('foto-galeri');
+  const preview = document.getElementById('preview');
+  const img = document.getElementById('preview-img');
+
+  function bind(input) {
+    input.addEventListener('change', function () {
+      const f = input.files && input.files[0];
+      if (!f) return;
+      if (f.size > 2 * 1024 * 1024) {
+        alert('Ukuran foto maksimal 2MB. File ini ' + (f.size / 1024 / 1024).toFixed(1) + 'MB.');
+        input.value = '';
+        return;
+      }
+      // Pastikan hanya satu sumber foto yang dipakai
+      if (input === kamera && galeri.value) galeri.value = '';
+      if (input === galeri && kamera.value) kamera.value = '';
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        img.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(f);
+    });
+  }
+
+  bind(kamera);
+  bind(galeri);
+})();
+</script>
 @endsection

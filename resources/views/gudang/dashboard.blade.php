@@ -82,15 +82,15 @@
     </div>
     <a href="/stok/excel" class="btn sm sec">Unduh Excel</a>
   </div>
-  <form method="GET" action="/" class="row" style="margin-bottom:12px">
-    <input name="q" value="{{ $q ?? '' }}" placeholder="Cari nama barang..." style="flex:1">
-    <select name="kategori" style="flex:1">
+  <form method="GET" action="/" class="row" style="margin-bottom:14px">
+    <input name="q" value="{{ $q ?? '' }}" placeholder="Cari nama barang..." style="flex:1 1 220px;min-width:0">
+    <select name="kategori" style="flex:1 1 180px;min-width:0">
       <option value="">Semua kategori</option>
       @foreach($kategori as $k)
         <option value="{{ $k->id }}" {{ request('kategori') == $k->id ? 'selected' : '' }}>{{ $k->nama_kategori }}</option>
       @endforeach
     </select>
-    <button type="submit" class="sec" style="width:auto;flex:0;margin:0">Cari</button>
+    <button type="submit" style="flex:0 0 auto;width:auto;margin:0">Cari</button>
   </form>
   @if($barang->isEmpty())
     <p class="muted">Belum ada barang. Tambah lewat menu Stok.</p>

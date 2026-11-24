@@ -111,4 +111,33 @@ class BarangFotoTest extends TestCase
 
         $this->assertNull($b->fresh()->foto, 'foto tidak boleh tersimpan');
     }
+
+    public function test_upload_via_galeri_tersimpan(): void
+    {
+        Storage::fake('public');
+        $b = $this->b();
+
+        $file = UploadedFile::fake()->image('galeri.jpg', 200, 200);
+
+        $this->put("/barang/{$b->id}", [
+            'nama_barang' => 'Sendok',
+            'satuan'      => 'pcs',
+            'ukuran'      => 'N/A',
+            'foto_galeri' => $file,
+        ])->assertRedirect();
+
+        $b->refresh();
+        $this->assertNotNull($b->foto, 'foto dari galeri harus tersimpan');
+        Storage::disk('public')->assertExists($b->foto);
+    }
+
+    public function test_halaman_edit_punya_dua_input_foto(): void
+    {
+        $b = $this->b();
+
+        $this->get("/barang/{$b->id}/edit")
+            ->assertOk()
+            ->assertSee('id="foto-kamera"', false)
+            ->assertSee('id="foto-galeri"', false);
+    }
 }

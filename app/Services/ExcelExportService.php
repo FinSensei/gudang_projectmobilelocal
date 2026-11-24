@@ -58,7 +58,7 @@ class ExcelExportService
      *   Nama Pemesan / Lokasi & Tanggal sebagai header blok,
      *   lalu tabel: Nama Barang | Keterangan | Stok Awal | Jumlah keluar | Jumlah Kembali | Stok Akhir | keterangan
      */
-    public function riwayat(): Xlsx
+    public function riwayat($pengembalian = null): Xlsx
     {
         $ss = $this->base();
         $sheet = $ss->getActiveSheet();
@@ -70,7 +70,7 @@ class ExcelExportService
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         $row = 3;
-        $pengembalian = Pengembalian::with(['acara', 'detailPengembalian.barang'])
+        $pengembalian = $pengembalian ?? Pengembalian::with(['acara', 'detailPengembalian.barang'])
             ->orderByDesc('id')->get();
 
         if ($pengembalian->isEmpty()) {

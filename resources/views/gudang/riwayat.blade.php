@@ -5,18 +5,34 @@
   <h2>Rekap pengembalian</h2>
   <p class="hint">Rincian tiap gelombang — barang yang kembali dan yang hilang.</p>
 
-  <div class="row-actions" style="margin:0 0 12px">
-    <a href="/riwayat/pdf" class="btn sm">Unduh PDF</a>
-    <a href="/riwayat/excel" class="btn sm sec">Unduh Excel</a>
-  </div>
-
-  <form method="GET" action="/riwayat" class="row" style="margin-bottom:12px">
-    <input name="q" value="{{ $q ?? '' }}" placeholder="Cari nama acara / barang..." style="flex:1">
-    <button type="submit" class="btn sm" style="margin:0;width:auto;padding:12px 16px;min-height:50px">Cari</button>
+  <form method="GET" action="/riwayat" style="margin-bottom:12px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:140px">
+        <label>Dari tanggal</label>
+        <input type="date" name="dari" value="{{ $dari ?? '' }}">
+      </div>
+      <div style="flex:1;min-width:140px">
+        <label>Sampai tanggal</label>
+        <input type="date" name="sampai" value="{{ $sampai ?? '' }}">
+      </div>
+      <div style="flex:1;min-width:160px">
+        <label>Cari</label>
+        <input name="q" value="{{ $q ?? '' }}" placeholder="nama acara / barang">
+      </div>
+      <div class="row-actions" style="margin:0">
+        <button type="submit" style="margin:0">Terapkan</button>
+        <a href="/riwayat" class="btn sm sec">Reset</a>
+      </div>
+    </div>
   </form>
 
+  <div class="row-actions" style="margin:0 0 12px">
+    <a href="/riwayat/pdf?dari={{ $dari ?? '' }}&amp;sampai={{ $sampai ?? '' }}&amp;q={{ $q ?? '' }}" class="btn sm">Unduh PDF</a>
+    <a href="/riwayat/excel?dari={{ $dari ?? '' }}&amp;sampai={{ $sampai ?? '' }}&amp;q={{ $q ?? '' }}" class="btn sm sec">Unduh Excel</a>
+  </div>
+
   @if($pengembalian->isEmpty())
-    <p class="muted">{{ ($q ?? '') !== '' ? 'Tidak ada hasil untuk pencarian itu.' : 'Belum ada pengembalian.' }}</p>
+    <p class="muted">{{ ($q ?? '') !== '' || ($dari ?? '') !== '' ? 'Tidak ada hasil untuk filter itu.' : 'Belum ada pengembalian.' }}</p>
   @else
     <div class="scroll" style="max-height:60vh">
       @foreach($pengembalian as $p)
