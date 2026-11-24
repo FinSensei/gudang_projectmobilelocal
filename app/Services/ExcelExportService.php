@@ -93,7 +93,7 @@ class ExcelExportService
             $headerRow = $row;
             $sheet->fromArray([
                 'Nama Barang', 'Keterangan', 'Stok Awal',
-                'Jumlah keluar', 'Jumlah Kembali', 'Stok Akhir', 'Keterangan',
+                'Jumlah keluar', 'Jumlah Kembali', 'Stok Akhir', 'Stok hilang',
             ], null, 'A'.$row);
             $this->styleHeader($sheet, "A{$row}:G{$row}");
             $row++;
@@ -110,7 +110,7 @@ class ExcelExportService
                     $r['keluar'],
                     $r['kembali'],
                     $stokAkhir,
-                    $r['hilang'] > 0 ? "hilang {$r['hilang']}" : '',
+                    (int) $r['hilang'],
                 ], null, 'A'.$row);
                 $row++;
             }

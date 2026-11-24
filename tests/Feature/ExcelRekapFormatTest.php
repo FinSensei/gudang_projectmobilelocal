@@ -63,7 +63,8 @@ class ExcelRekapFormatTest extends TestCase
         $flat = implode("\n", array_map(fn($r) => implode(' | ', array_map(fn($v) => (string) $v, $r)), $rows));
 
         $this->assertStringContainsString('Pemanas air', $flat);
-        $this->assertStringContainsString('hilang 2', $flat);
+        $this->assertStringContainsString('Stok hilang', $flat, 'header kolom terakhir harus Stok hilang');
+        $this->assertStringContainsString('Pemanas air', $flat);
     }
 
     public function test_rekap_tanpa_data_tetap_valid(): void
