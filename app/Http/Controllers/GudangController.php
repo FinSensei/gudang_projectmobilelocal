@@ -544,7 +544,7 @@ class GudangController extends Controller
     }
     public function log()
     {
-        $log = LogAktivitas::orderByDesc('id')->limit(100)->get();
+        $log = LogAktivitas::orderByDesc('id')->limit(LogAktivitas::MAX_ROWS)->get();
         return view('gudang.log', compact('log'));
     }
 
