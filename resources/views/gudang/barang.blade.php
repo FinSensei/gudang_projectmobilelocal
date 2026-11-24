@@ -22,7 +22,7 @@ function addRow(){
       '<div style="flex:2;min-width:130px"><label>Nama barang</label>' +
         '<input name="nama[]" placeholder="mis. Sendok" required></div>' +
       '<div style="flex:1;min-width:110px"><label>Ukuran (opsional)</label>' +
-        '<input name="ukuran" placeholder="mis. 21 cm"></div>' +
+        '<input name="ukuran[]" placeholder="mis. 21 cm"></div>' +
       '<div style="flex:1;min-width:90px"><label>Jumlah</label>' +
         '<input name="jumlah[]" type="number" min="0" value="1" required></div>' +
       '<button type="button" class="sec" style="width:auto;padding:10px 12px;margin:0" onclick="this.parentNode.remove()">×</button>' +

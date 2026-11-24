@@ -17,6 +17,22 @@ use Illuminate\Support\Str;
 
 class GudangController extends Controller
 {
+    /** Map barang_id => total jumlah keluar di acara aktif (1 query, bukan N+1) */
+    private function keluarMap(): array
+    {
+        $aktifIds = Acara::where('status', 'aktif')->pluck('id')->all();
+        if (!$aktifIds) {
+            return [];
+        }
+
+        return DetailAcara::select('barang_id', DB::raw('SUM(jumlah_keluar) as total'))
+            ->whereIn('acara_id', $aktifIds)
+            ->groupBy('barang_id')
+            ->pluck('total', 'barang_id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
+    }
+
     // ---------- Dashboard ----------
     public function index(Request $request)
     {
@@ -35,7 +51,9 @@ class GudangController extends Controller
         $totalKembali = DetailPengembalian::sum('jumlah_kembali');
         $totalKeluar = DetailAcara::sum('jumlah_keluar');
 
-        return view('gudang.dashboard', compact('barang', 'acaraAktif', 'q', 'kategori', 'lowStock', 'totalHilang', 'totalKembali', 'totalKeluar'));
+        $keluarMap = $this->keluarMap();
+
+        return view('gudang.dashboard', compact('barang', 'acaraAktif', 'q', 'kategori', 'lowStock', 'totalHilang', 'totalKembali', 'totalKeluar', 'keluarMap'));
     }
 
     // ---------- Restock ----------
@@ -264,7 +282,8 @@ class GudangController extends Controller
             'nama.*'  => 'required|string|max:100',
             'jumlah'  => 'required|array',
             'jumlah.*'=> 'required|integer|min:0',
-            'ukuran'  => 'nullable|string|max:50',
+            'ukuran'  => 'nullable|array',
+            'ukuran.*'=> 'nullable|string|max:50',
             'kategori_id' => 'nullable|exists:kategori,id',
         ]);
 
@@ -275,7 +294,7 @@ class GudangController extends Controller
                     'nama_barang' => $nama,
                     'kategori_id' => $data['kategori_id'] ?? null,
                     'satuan'      => 'pcs',
-                    'ukuran'      => $data['ukuran'] ?? null,
+                    'ukuran'      => $data['ukuran'][$i] ?? null,
                     'kode_qr'     => 'QR-'.strtoupper(Str::random(8)),
                     'stok_total'  => (int) $data['jumlah'][$i],
                     'stok_baik'   => (int) $data['jumlah'][$i],

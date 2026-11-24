@@ -98,7 +98,7 @@
     <div class="scroll">
     <ul class="list">
       @foreach($barang as $b)
-        @php($st = $b->statusPemakaian())
+        @php($st = ($keluarMap[$b->id] ?? 0) > 0 ? 'sedang digunakan' : 'tersedia')
         <li>
           <div>
             <b style="font-size:17px">{{ $b->nama_barang }}</b>

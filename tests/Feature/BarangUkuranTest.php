@@ -8,6 +8,7 @@ use App\Models\Barang;
 
 class BarangUkuranTest extends TestCase
 {
+    use RefreshDatabase;
 
     public function test_barang_menyimpan_ukuran(): void
     {
@@ -60,7 +61,7 @@ class BarangUkuranTest extends TestCase
         $this->post('/barang', [
             'nama'    => ['Piring'],
             'jumlah'  => [12],
-            'ukuran'  => '26 cm',
+            'ukuran'  => ['26 cm'],
         ])->assertRedirect();
 
         $this->assertDatabaseHas('barang', [
