@@ -331,10 +331,14 @@ class GudangController extends Controller
 
         $kembali = DetailPengembalian::with('pengembalian')
             ->where('barang_id', $barang->id)
+            ->whereHas('pengembalian')   // abaikan detail yg pengembaliannya sudah di-undo
             ->orderByDesc('id')->get();
 
         $rows = [];
         foreach ($keluar as $k) {
+            if (!$k->acara) {
+                continue;
+            }
             $rows[] = [
                 'tanggal' => $k->acara->tanggal,
                 'tipe'    => 'keluar',
@@ -343,6 +347,9 @@ class GudangController extends Controller
             ];
         }
         foreach ($kembali as $k) {
+            if (!$k->pengembalian) {
+                continue;   // pengaman: relasi null (mis. hasil undo)
+            }
             $rows[] = [
                 'tanggal' => $k->pengembalian->tanggal_pulang,
                 'tipe'    => 'kembali',
