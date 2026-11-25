@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class LogAktivitas extends Model
 {
     /** Maksimal baris log yang disimpan */
-    public const MAX_ROWS = 20;
+    public const MAX_ROWS = 100;
 
     protected $table = 'log_aktivitas';
     protected $fillable = ['aksi', 'entitas', 'keterangan'];

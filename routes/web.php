@@ -44,6 +44,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/restock', [GudangController::class, 'restockStore']);
 
         Route::post('/rusak', [GudangController::class, 'rusakStore']);
+        Route::post('/stok/sinkron', [GudangController::class, 'stokSinkron']);
 
         Route::get('/acara', [GudangController::class, 'acaraForm'])->name('acara');
         Route::post('/acara', [GudangController::class, 'acaraStore']);
@@ -72,6 +73,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/riwayat/{id}', [GudangController::class, 'riwayatDetail'])->whereNumber('id');
 
         Route::get('/log', [GudangController::class, 'log'])->name('log');
+        Route::get('/log/export', [GudangController::class, 'logExport']);
 
         Route::get('/qr', [GudangController::class, 'qrPage'])->name('qr');
 

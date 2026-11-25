@@ -44,9 +44,14 @@ class CheckoutService
     public function konfirmasi(Acara $acara): void
     {
         DB::transaction(function () use ($acara) {
-            if ($acara->status !== 'reservasi') {
+            // Kunci baris acara: dua admin tidak bisa konfirmasi bersamaan
+            $terkunci = Acara::whereKey($acara->id)->lockForUpdate()->first();
+
+            if (!$terkunci || $terkunci->status !== 'reservasi') {
                 throw new \RuntimeException('Acara tidak berstatus reservasi.');
             }
+
+            $acara->setRawAttributes($terkunci->getAttributes(), true);
 
             foreach ($acara->detailAcara as $d) {
                 $b = Barang::findOrFail($d->barang_id);

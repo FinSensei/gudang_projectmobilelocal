@@ -10,6 +10,12 @@
     <span class="badge selesai">{{ $log->count() }} aktivitas</span>
   </div>
 
+  <p class="hint">Menyimpan {{ $log->count() }} aktivitas terbaru — yang lama otomatis dibuang.</p>
+
+  <div class="row-actions" style="margin:0 0 12px">
+    <a href="/log/export" class="btn sm">Unduh Excel</a>
+  </div>
+
   @if($log->isEmpty())
     <p class="muted">Belum ada aktivitas.</p>
   @else
@@ -18,7 +24,7 @@
         <div class="log-row">
           <div class="log-when">
             <b>{{ $l->created_at?->format('d M') }}</b>
-            <span>{{ $l->created_at?->format('H:i') }}</span>
+            <span>{{ $l->created_at?->format('H:i:s') }}</span>
           </div>
           <div class="log-body">
             <span class="badge {{ $l->aksi === 'hapus_barang' ? 'rusak' : ($l->aksi === 'pengembalian' ? 'aktif' : 'selesai') }}">{{ $l->aksi }}</span>

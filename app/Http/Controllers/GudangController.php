@@ -113,6 +113,17 @@ class GudangController extends Controller
         return back()->with('err', 'Pilih barang atau isi nama barang baru.');
     }
 
+    /**
+     * Jumlah barang yang sedang dipesan (reservasi) atau keluar (aktif).
+     * Dipakai supaya stok baik tidak dirombak sampai reservasi tak terpenuhi.
+     */
+    private function jumlahDipesan(int $barangId): int
+    {
+        return (int) DetailAcara::where('barang_id', $barangId)
+            ->whereHas('acara', fn ($q) => $q->whereIn('status', ['reservasi', 'aktif']))
+            ->sum('jumlah_keluar');
+    }
+
     // ---------- Rusak / Hilang ----------
     public function rusakStore(Request $request)
     {
@@ -125,6 +136,17 @@ class GudangController extends Controller
         ]);
 
         $b = Barang::findOrFail($data['barang_id']);
+
+        // Barang yang sudah dipesan di reservasi tidak boleh ditandai hilang —
+        // nanti reservasinya tidak bisa dipenuhi.
+        if ($data['jenis'] === 'hilang') {
+            $dipesan = $this->jumlahDipesan($b->id);
+            if ($dipesan > 0) {
+                return back()
+                    ->withErrors(['jumlah' => "{$b->nama_barang} sedang dipesan/dipakai {$dipesan}. Tidak bisa ditandai hilang."])
+                    ->withInput();
+            }
+        }
 
         if ($b->stok_baik < $data['jumlah']) {
             return back()
@@ -676,8 +698,16 @@ class GudangController extends Controller
     {
         $request->validate(['jumlah' => 'required|integer|min:1']);
         $barang = Barang::findOrFail($id);
-        if ($barang->stok_baik < $request->jumlah) {
-            return back()->with('err', "Stok baik {$barang->nama_barang} hanya {$barang->stok_baik}.");
+
+        // Jangan sampai sisa baik kurang dari yang sudah dipesan di reservasi
+        $dipesan = $this->jumlahDipesan($barang->id);
+        $bebas = max(0, (int) $barang->stok_baik - $dipesan);
+
+        if ($request->jumlah > $bebas) {
+            $ket = $dipesan > 0
+                ? "Sisa yang bebas hanya {$bebas} ({$dipesan} sedang dipesan)."
+                : "Stok baik {$barang->nama_barang} hanya {$barang->stok_baik}.";
+            return back()->with('err', $ket)->withInput();
         }
         $barang->stok_baik -= $request->jumlah;
         $barang->stok_total -= $request->jumlah;
@@ -849,10 +879,11 @@ class GudangController extends Controller
             $request
         )->get();
 
-        $totalKeluar = 0; $totalKembali = 0; $totalHilang = 0;
+        // Rekap dari detail pengembalian (jumlah_keluar TIDAK ada di tabel ini,
+        // jadi total keluar tidak dihitung di sini — lihat halaman Proses).
+        $totalKembali = 0; $totalHilang = 0;
         foreach ($pengembalian as $p) {
             foreach ($p->detailPengembalian as $d) {
-                $totalKeluar  += $d->jumlah_keluar;
                 $totalKembali += $d->jumlah_kembali;
                 $totalHilang  += $d->jumlah_hilang;
             }
@@ -862,7 +893,7 @@ class GudangController extends Controller
         $sampai = $request->input('sampai');
 
         return view('gudang.riwayat', compact(
-            'pengembalian', 'q', 'totalKeluar', 'totalKembali', 'totalHilang', 'dari', 'sampai'
+            'pengembalian', 'q', 'totalKembali', 'totalHilang', 'dari', 'sampai'
         ));
     }
 
@@ -958,6 +989,64 @@ class GudangController extends Controller
         }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    /** Export log aktivitas (100 terbaru) ke Excel. */
+    public function logExport()
+    {
+        $xlsx = app(\App\Services\ExcelExportService::class)->log();
+        $filename = 'log-aktivitas-'.now()->format('Y-m-d').'.xlsx';
+
+        return response()->streamDownload(function () use ($xlsx) {
+            $xlsx->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Sinkronkan stok_total tiap barang dari komponennya:
+     *   total = baik + rusak ringan + rusak berat + yang sedang keluar
+     * Berguna kalau ada data lama yang tidak konsisten.
+     */
+    public function stokSinkron()
+    {
+        $aktifIds = Acara::where('status', 'aktif')->pluck('id');
+
+        $keluarMap = DetailAcara::whereIn('acara_id', $aktifIds)
+            ->selectRaw('barang_id, SUM(jumlah_keluar) as total')
+            ->groupBy('barang_id')
+            ->pluck('total', 'barang_id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
+
+        $diperbaiki = 0;
+
+        Barang::orderBy('id')->get()->each(function ($b) use ($keluarMap, &$diperbaiki) {
+            $keluar = (int) ($keluarMap[$b->id] ?? 0);
+            $baru = (int) $b->stok_baik
+                  + (int) $b->stok_rusak_ringan
+                  + (int) $b->stok_rusak_berat
+                  + $keluar;
+
+            if ((int) $b->stok_total !== $baru) {
+                $b->stok_total = $baru;
+                $b->save();
+                $diperbaiki++;
+            }
+        });
+
+        LogAktivitas::create([
+            'aksi'       => 'sinkron_stok',
+            'entitas'    => 'barang',
+            'keterangan' => $diperbaiki > 0 ? "{$diperbaiki} barang dibetulkan" : 'semua sudah konsisten',
+        ]);
+
+        $pesan = $diperbaiki > 0
+            ? "{$diperbaiki} stok barang dibetulkan."
+            : 'Semua stok sudah konsisten.';
+
+        return back()->with('ok', $pesan);
     }
 
     public function stokExcel()

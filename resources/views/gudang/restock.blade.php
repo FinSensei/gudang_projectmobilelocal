@@ -20,6 +20,15 @@
 
     <button type="submit">Tambah stok</button>
   </form>
+
+  <form method="POST" action="/stok/sinkron" class="mt-16">
+    @csrf
+    <p class="hint">
+      Kalau angka <b>Total</b> terasa tidak cocok dengan jumlah baik + rusak,
+      tekan tombol ini. Stok akan dihitung ulang dari komponennya.
+    </p>
+    <button type="submit" class="btn-line">Sinkronkan stok</button>
+  </form>
 </div>
 
 <div class="card">

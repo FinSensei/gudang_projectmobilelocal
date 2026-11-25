@@ -23,3 +23,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /storage/framework/*.php
+
+# Backup DB lokal (jangan ikut repo)
+/backup/
+/backup.sh

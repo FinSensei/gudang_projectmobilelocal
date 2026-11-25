@@ -97,12 +97,12 @@ class SimulasiInvarianTest extends TestCase
         $a->detailAcara()->create(['barang_id'=>$b->id,'jumlah_keluar'=>40]);
         $b->update(['stok_baik'=>60]);         // 40 di event
 
-        // kurangi 30 dari yang di gudang (baik 60 -> 30)
-        $this->post("/barang/{$b->id}/kurangi", ['jumlah'=>30])->assertRedirect();
+        // 40 sedang di event -> sisa bebas 20. Kurangi 20 (maksimal).
+        $this->post("/barang/{$b->id}/kurangi", ['jumlah'=>20])->assertRedirect();
 
         $b->refresh();
-        $this->assertSame(30, $b->stok_baik);
-        $this->assertSame(70, $b->stok_total);
+        $this->assertSame(40, $b->stok_baik);
+        $this->assertSame(80, $b->stok_total);
         $this->assertSame(0, $this->invariant($b), 'invariant setelah kurangi');
     }
 

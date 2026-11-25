@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Barang;
 use App\Models\Acara;
 use App\Models\DetailAcara;
+use App\Models\LogAktivitas;
 use App\Models\Pengembalian;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -152,6 +153,56 @@ class ExcelExportService
      * Stok barang — format image a9719c:
      *   No | Kode Barang | Nama Barang | Photo | Jumlah | Ukuran | Keterangan
      */
+
+    /**
+     * Export log aktivitas: 100 terbaru dengan waktu lengkap (tanggal + jam).
+     */
+    public function log(): Xlsx
+    {
+        $ss = $this->base();
+        $sheet = $ss->getActiveSheet();
+        $sheet->setTitle('Log Aktivitas');
+
+        $sheet->fromArray(['Log Aktivitas — 100 Terbaru'], null, 'A1');
+        $sheet->getStyle('A1:E1')->getFont()->setBold(true)->setSize(14);
+        $sheet->mergeCells('A1:E1');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $headerRow = 3;
+        $sheet->fromArray(['No', 'Waktu', 'Aksi', 'Entitas', 'Keterangan'], null, 'A'.$headerRow);
+        $this->styleHeader($sheet, "A{$headerRow}:E{$headerRow}");
+
+        $row = $headerRow + 1;
+        $no  = 0;
+
+        LogAktivitas::orderByDesc('id')
+            ->limit(LogAktivitas::MAX_ROWS)
+            ->get()
+            ->each(function ($l) use ($sheet, &$row, &$no) {
+                $no++;
+                $sheet->fromArray([
+                    $no,
+                    $l->created_at?->format('Y-m-d H:i:s') ?: '-',
+                    $l->aksi,
+                    $l->entitas,
+                    $l->keterangan,
+                ], null, 'A'.$row);
+                $row++;
+            });
+
+        $this->styleBody($sheet, $headerRow + 1, $row - 1, 5);
+
+        // kolom Waktu rata tengah, angka No rata kanan
+        $sheet->getStyle('A'.($headerRow+1).':A'.($row-1))
+            ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        for ($c = 'A'; $c <= 'E'; $c++) {
+            $sheet->getColumnDimension($c)->setAutoSize(true);
+        }
+
+        return new Xlsx($ss);
+    }
+
     public function stok(): Xlsx
     {
         $ss = $this->base();
