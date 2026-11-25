@@ -28,6 +28,7 @@
       <input type="hidden" name="kembali[{{ $r['barang_id'] }}]" value="{{ $r['kembali'] }}">
       <input type="hidden" name="rusak_ringan[{{ $r['barang_id'] }}]" value="{{ $r['ringan'] ?? 0 }}">
       <input type="hidden" name="rusak_berat[{{ $r['barang_id'] }}]" value="{{ $r['berat'] ?? 0 }}">
+      <input type="hidden" name="hilang[{{ $r['barang_id'] }}]" value="{{ $r['hilang'] ?? 0 }}">
     @endforeach
     <input type="hidden" name="tanggal" value="{{ $tanggal }}">
 

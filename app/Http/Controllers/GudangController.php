@@ -344,12 +344,14 @@ class GudangController extends Controller
         $data = $request->validate([
             'acara_ids'   => 'required|array|min:1',
             'acara_ids.*' => 'exists:acara,id',
-            'kembali'     => 'required|array',
+            'kembali'     => 'nullable|array',   // baik dihitung otomatis
             'kembali.*'   => 'integer|min:0',
             'rusak_ringan'   => 'nullable|array',
             'rusak_ringan.*' => 'integer|min:0',
             'rusak_berat'    => 'nullable|array',
             'rusak_berat.*'  => 'integer|min:0',
+            'hilang'         => 'nullable|array',
+            'hilang.*'       => 'integer|min:0',
         ]);
 
         // Acara yang sudah selesai tidak boleh diproses ulang
@@ -364,38 +366,29 @@ class GudangController extends Controller
             $outMap[$d->barang_id] = ($outMap[$d->barang_id] ?? 0) + $d->jumlah_keluar;
         });
 
-        // Kembali tidak boleh melebihi jumlah keluar
+        // Ringan + berat + hilang tidak boleh melebihi jumlah keluar
         $lebih = [];
         foreach ($outMap as $bid => $out) {
-            $k = (int)($data['kembali'][$bid] ?? 0);
-            if ($k > $out) {
-                $lebih[] = Barang::find($bid)->nama_barang;
+            $total = (int)($data['rusak_ringan'][$bid] ?? 0)
+                   + (int)($data['rusak_berat'][$bid] ?? 0)
+                   + (int)($data['hilang'][$bid] ?? 0);
+            if ($total > $out) {
+                $lebih[] = Barang::find($bid)->nama_barang." (isi {$total}, keluar {$out})";
             }
         }
         if ($lebih) {
-            return back()->withErrors(['kembali' => 'Jumlah kembali melebihi jumlah keluar untuk: '.implode(', ', $lebih)])->withInput();
+            return back()->withErrors(['rusak_ringan' => 'Ringan + berat + hilang melebihi jumlah keluar: '.implode(', ', $lebih)])->withInput();
         }
 
         $rows = [];
         foreach ($outMap as $bid => $out) {
             $b = Barang::find($bid);
-            $baik   = (int) ($data['kembali'][$bid] ?? 0);
             $ringan = (int) ($data['rusak_ringan'][$bid] ?? 0);
             $berat  = (int) ($data['rusak_berat'][$bid] ?? 0);
+            $hilang = (int) ($data['hilang'][$bid] ?? 0);
 
-            // total tidak boleh melebihi keluar
-            $total = $baik + $ringan + $berat;
-            if ($total > $out) {
-                $berat = max(0, $berat - ($total - $out));
-                $total = $baik + $ringan + $berat;
-            }
-            if ($total > $out) {
-                $ringan = max(0, $ringan - ($total - $out));
-                $total = $baik + $ringan + $berat;
-            }
-            if ($total > $out) {
-                $baik = max(0, $baik - ($total - $out));
-            }
+            // Baik dihitung otomatis = keluar - ringan - berat - hilang
+            $baik = max(0, $out - $ringan - $berat - $hilang);
 
             $rows[] = [
                 'barang_id'    => $bid,
@@ -404,7 +397,7 @@ class GudangController extends Controller
                 'kembali'      => $baik,
                 'ringan'       => $ringan,
                 'berat'        => $berat,
-                'hilang'       => max(0, $out - ($baik + $ringan + $berat)),
+                'hilang'       => $hilang,
             ];
         }
         $totalHilang = array_sum(array_column($rows,'hilang'));
@@ -423,12 +416,14 @@ class GudangController extends Controller
         $data = $request->validate([
             'acara_ids'   => 'required|array|min:1',
             'acara_ids.*' => 'exists:acara,id',
-            'kembali'     => 'required|array',
+            'kembali'     => 'nullable|array',   // baik dihitung otomatis
             'kembali.*'   => 'integer|min:0',
             'rusak_ringan'   => 'nullable|array',
             'rusak_ringan.*' => 'integer|min:0',
             'rusak_berat'    => 'nullable|array',
             'rusak_berat.*'  => 'integer|min:0',
+            'hilang'         => 'nullable|array',
+            'hilang.*'       => 'integer|min:0',
         ]);
 
         // Acara yang sudah selesai tidak boleh diproses ulang
@@ -437,20 +432,22 @@ class GudangController extends Controller
             return back()->withErrors(['acara_ids' => 'Ada acara yang sudah selesai. Pilih hanya acara yang masih aktif.'])->withInput();
         }
 
-        // Kembali tidak boleh melebihi jumlah keluar
+        // Ringan + berat + hilang tidak boleh melebihi jumlah keluar
         $outMap = [];
         DetailAcara::whereIn('acara_id', $data['acara_ids'])->get()->each(function ($d) use (&$outMap) {
             $outMap[$d->barang_id] = ($outMap[$d->barang_id] ?? 0) + $d->jumlah_keluar;
         });
         $lebih = [];
         foreach ($outMap as $bid => $out) {
-            $k = (int) ($data['kembali'][$bid] ?? 0);
-            if ($k > $out) {
-                $lebih[] = Barang::find($bid)->nama_barang;
+            $total = (int) ($data['rusak_ringan'][$bid] ?? 0)
+                   + (int) ($data['rusak_berat'][$bid] ?? 0)
+                   + (int) ($data['hilang'][$bid] ?? 0);
+            if ($total > $out) {
+                $lebih[] = Barang::find($bid)->nama_barang." (isi {$total}, keluar {$out})";
             }
         }
         if ($lebih) {
-            return back()->withErrors(['kembali' => 'Jumlah kembali melebihi jumlah keluar untuk: '.implode(', ', $lebih)])->withInput();
+            return back()->withErrors(['rusak_ringan' => 'Ringan + berat + hilang melebihi jumlah keluar: '.implode(', ', $lebih)])->withInput();
         }
 
         DB::transaction(function () use ($data) {
@@ -467,9 +464,10 @@ class GudangController extends Controller
                 DetailPengembalian::create([
                     'pengembalian_id'    => $p->id,
                     'barang_id'          => $bid,
-                    'jumlah_kembali'     => (int) ($data['kembali'][$bid] ?? 0),
+                    'jumlah_kembali'     => max(0, $out - (int)($data['rusak_ringan'][$bid] ?? 0) - (int)($data['rusak_berat'][$bid] ?? 0) - (int)($data['hilang'][$bid] ?? 0)),
                     'jumlah_rusak_ringan'=> (int) ($data['rusak_ringan'][$bid] ?? 0),
                     'jumlah_rusak_berat' => (int) ($data['rusak_berat'][$bid] ?? 0),
+                    'jumlah_hilang'      => (int) ($data['hilang'][$bid] ?? 0),
                 ]);
             }
             app(PengembalianService::class)->hitung($p);
@@ -495,10 +493,14 @@ class GudangController extends Controller
             'ukuran'  => 'nullable|array',
             'ukuran.*'=> 'nullable|string|max:50',
             'kategori_id' => 'nullable|exists:kategori,id',
+            'foto'    => 'nullable|array',
+            'foto.*'  => 'nullable|image|max:2048',
         ]);
 
+        $foto = $request->file('foto', []);
+
         $n = count($data['nama']);
-        DB::transaction(function () use ($data) {
+        DB::transaction(function () use ($data, $foto) {
             foreach ($data['nama'] as $i => $nama) {
                 $barang = Barang::create([
                     'nama_barang' => $nama,
@@ -510,11 +512,20 @@ class GudangController extends Controller
                     'stok_baik'   => (int) $data['jumlah'][$i],
                     'stok_rusak_ringan' => 0, 'stok_rusak_berat' => 0,
                 ]);
+
+                // Foto opsional per baris — baris tanpa foto tidak menggeser baris lain
+                if (!empty($foto[$i])) {
+                    $path = $foto[$i]->store('barang', 'public');
+                    $this->compressFoto($path);
+                    $barang->foto = $path;
+                    $barang->save();
+                }
+
                 LogAktivitas::create(['aksi'=>'barang_baru','entitas'=>'barang','keterangan'=>$barang->nama_barang]);
             }
         });
 
-        return redirect('/barang')->with('ok', "{$n} barang ditambahkan.");
+        return redirect('/restock')->with('ok', "{$n} barang ditambahkan.");
     }
 
     // ---------- Edit / Hapus barang ----------

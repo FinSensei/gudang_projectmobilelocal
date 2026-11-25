@@ -17,8 +17,8 @@ class PengembalianKembaliTest extends TestCase
     // BUG #1: barang dari acara yang TIDAK dicentang tidak boleh diproses
     public function test_pengembalian_tidak_memproses_barang_dari_acara_yang_tidak_dipilih(): void
     {
-        $sendok = Barang::create(['nama_barang'=>'Sendok','satuan'=>'pcs','kode_qr'=>'S1','stok_total'=>1000,'stok_baik'=>1000,'stok_rusak'=>0]);
-        $gelas  = Barang::create(['nama_barang'=>'Gelas','satuan'=>'pcs','kode_qr'=>'G1','stok_total'=>500,'stok_baik'=>500,'stok_rusak'=>0]);
+        $sendok = Barang::create(['nama_barang'=>'Sendok','satuan'=>'pcs','kode_qr'=>'S1','stok_total'=>1000,'stok_baik'=>1000,'stok_rusak_ringan'=>0,'stok_rusak_berat'=>0]);
+        $gelas  = Barang::create(['nama_barang'=>'Gelas','satuan'=>'pcs','kode_qr'=>'G1','stok_total'=>500,'stok_baik'=>500,'stok_rusak_ringan'=>0,'stok_rusak_berat'=>0]);
 
         $a = Acara::create(['nama_acara'=>'A','status'=>'aktif']);
         $b = Acara::create(['nama_acara'=>'B','status'=>'aktif']);
@@ -30,7 +30,8 @@ class PengembalianKembaliTest extends TestCase
         // operator hanya centang A, tapi form ikut mengirim kembali milik B (gelas)
         $this->post('/pengembalian', [
             'acara_ids' => [$a->id],
-            'kembali'   => [$sendok->id => 280, $gelas->id => 200],
+            // sendok: 300 keluar, 20 hilang -> baik otomatis 280
+            'hilang'    => [$sendok->id => 20, $gelas->id => 999],
             'tanggal'   => '2026-11-21',
         ])->assertRedirect('/');
 
@@ -52,7 +53,7 @@ class PengembalianKembaliTest extends TestCase
 
         $p = Pengembalian::create(['tanggal_pulang'=>'2026-11-21']);
         $p->acara()->attach($a->id);
-        DetailPengembalian::create(['pengembalian_id'=>$p->id,'barang_id'=>$sendok->id,'jumlah_kembali'=>60]);
+        DetailPengembalian::create(['pengembalian_id'=>$p->id,'barang_id'=>$sendok->id,'jumlah_kembali'=>60,'jumlah_rusak_ringan'=>0,'jumlah_rusak_berat'=>0]);
 
         app(PengembalianService::class)->hitung($p->refresh());
 

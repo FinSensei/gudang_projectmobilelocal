@@ -26,7 +26,7 @@
   <h2>Tambah barang baru</h2>
   <p class="hint">Untuk barang yang belum terdaftar. Ukuran opsional — isi kalau ada (mis. 21 cm), kalau tidak ada kosongkan.</p>
 
-  <form method="POST" action="/barang" id="form-barang">
+  <form method="POST" action="/barang" enctype="multipart/form-data" id="form-barang">
     @csrf
     <div id="rows"></div>
     <button type="button" class="sec" onclick="addRow()">+ Baris barang</button>
@@ -89,6 +89,8 @@ window.addRow = function () {
         '<input name="ukuran[]" placeholder="mis. 21 cm"></div>' +
       '<div style="flex:1;min-width:90px"><label>Jumlah</label>' +
         '<input name="jumlah[]" type="number" inputmode="numeric" min="0" value="1" required></div>' +
+      '<div style="flex:1;min-width:120px"><label>Foto (opsional)</label>' +
+        '<input name="foto[]" type="file" accept="image/*" style="font-size:14px"></div>' +
       '<button type="button" class="sec" style="flex:0 0 auto;width:auto;margin:0;padding:12px 14px" ' +
         'onclick="this.closest(\'.item-row\').remove()">✕</button>' +
     '</div>');

@@ -129,9 +129,20 @@
   .row > *{min-width:0}
   .row input,.row select,.row button{margin-top:0}
 
+  /* form kembali: input Baik (otomatis, readonly) */
+  .baik-input{background:#f1f5f9;font-weight:700;color:var(--fg)}
+  .baik-info{font-size:13px}
+
   /* form kembali: baris per barang */
   .retur-row{border:1px solid var(--bd);border-radius:10px;padding:10px;margin-top:8px;background:#fcfcfd}
   .retur-nama{display:flex;justify-content:space-between;gap:8px;font-size:15px}
+
+  /* form kembali: hasil hitung baik */
+  .baik-hitung{display:flex;align-items:baseline;gap:8px;margin-top:8px;
+    padding-top:8px;border-top:1px dashed var(--bd)}
+  .baik-hitung span{font-size:13px;color:var(--mut)}
+  .baik-hitung b{font-size:22px;color:var(--green)}
+  .baik-hitung .muted{font-size:12px}
 
   /* kartu stok: 4 angka kondisi barang */
   .stok-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}

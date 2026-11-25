@@ -42,7 +42,7 @@ class PengembalianSafetyTest extends TestCase
         ])->assertSessionHasErrors('acara_ids');
     }
 
-    public function test_pengembalian_menolak_jika_kembali_melebihi_keluar(): void
+    public function test_pengembalian_menolak_jika_rusak_hilang_melebihi_keluar(): void
     {
         $b = Barang::create(['nama_barang'=>'Sendok','satuan'=>'pcs','kode_qr'=>'S3','stok_total'=>100,'stok_baik'=>50,'stok_rusak'=>0]);
         $a = Acara::create(['nama_acara'=>'Konser','tanggal'=>'2026-01-01','status'=>'aktif']);
@@ -50,7 +50,7 @@ class PengembalianSafetyTest extends TestCase
 
         $this->post('/pengembalian', [
             'acara_ids' => [$a->id],
-            'kembali'   => [$b->id => 90],
-        ])->assertSessionHasErrors('kembali');
+            'hilang'    => [$b->id => 90],
+        ])->assertSessionHasErrors('rusak_ringan');
     }
 }
