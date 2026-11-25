@@ -22,10 +22,13 @@
       <span class="stok-label">Rusak Berat</span>
       <b class="stok-num">{{ $barang->stok_rusak_berat }}</b>
     </div>
+    <div class="stok-box keluar">
+      <span class="stok-label">Sedang Keluar</span>
+      <b class="stok-num">{{ $barang->stokKeluar() }}</b>
+    </div>
   </div>
   <p class="hint">
-    Sedang keluar: <b>{{ $barang->stokKeluar() }}</b> ·
-    Kondisi: <b>{{ $barang->statusStok() }}</b>
+    Total = Baik + Ringan + Berat + Keluar. Kondisi: <b>{{ $barang->statusStok() }}</b>
   </p>
 </div>
 

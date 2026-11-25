@@ -4,6 +4,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GudangController;
 use App\Http\Controllers\LoginController;
 
+// ---------- PWA manifest ----------
+Route::get('/manifest.webmanifest', function () {
+    $isi = is_file(public_path('manifest.webmanifest'))
+        ? file_get_contents(public_path('manifest.webmanifest'))
+        : '{}';
+
+    return response($isi, 200, ['Content-Type' => 'application/manifest+json']);
+});
+
 // ---------- Tamu ----------
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLogin'])->name('login');

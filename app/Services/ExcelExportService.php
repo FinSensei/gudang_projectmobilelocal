@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Barang;
+use App\Models\Acara;
+use App\Models\DetailAcara;
 use App\Models\Pengembalian;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -17,6 +19,22 @@ class ExcelExportService
     private const HEADER_TEXT = 'FFFFFFFF';
     private const ALT_FILL    = 'FFF3F6FB';   // abu sangat muda
     private const LINE        = 'FFD1D5DB';
+
+        /**
+     * Peta barang_id => total jumlah keluar di acara aktif.
+     * Dihitung sekali (2 query) supaya tidak N+1 saat loop ratusan barang.
+     */
+    private function keluarMap(): array
+    {
+        $aktifIds = Acara::where('status', 'aktif')->pluck('id');
+
+        return DetailAcara::whereIn('acara_id', $aktifIds)
+            ->selectRaw('barang_id, SUM(jumlah_keluar) as total')
+            ->groupBy('barang_id')
+            ->pluck('total', 'barang_id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
+    }
 
     private function base(): Spreadsheet
     {
@@ -154,10 +172,12 @@ class ExcelExportService
 
         $row = $headerRow + 1;
         $no = 0;
-        Barang::orderBy('nama_barang')->get()->each(function ($b) use ($sheet, &$row, &$no) {
+        $keluarMap = $this->keluarMap();
+        Barang::orderBy('nama_barang')->get()->each(function ($b) use ($sheet, &$row, &$no, $keluarMap) {
             $no++;
+            $keluar = (int) ($keluarMap[$b->id] ?? 0);
             $ket = [];
-            if ($b->stokKeluar() > 0) $ket[] = "keluar {$b->stokKeluar()}";
+            if ($keluar > 0) $ket[] = "keluar {$keluar}";
             if ($b->statusStok() !== 'aman') $ket[] = $b->statusStok();
 
             $sheet->fromArray([

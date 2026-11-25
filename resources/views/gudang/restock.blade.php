@@ -35,9 +35,10 @@
 </div>
 
 <div class="card">
-  <h2>Tandai rusak</h2>
-  <p class="hint">Pilih tingkat kerusakan supaya laporan bisa memisahkan mana yang masih bisa diperbaiki.</p>
-  <form method="POST" action="/rusak">
+  <h2>Tandai rusak atau hilang</h2>
+  <p class="hint">Pilih jenisnya: <b>rusak</b> (barang masih ada, tapi tidak layak) atau <b>hilang</b> (barang tidak ada lagi).</p>
+
+  <form method="POST" action="/rusak" id="form-rusak">
     @csrf
     <label>Nama barang</label>
     <input id="cari_rusak" list="barang_list2" placeholder="Ketik nama barang..." autocomplete="off">
@@ -48,16 +49,32 @@
     </datalist>
     <input type="hidden" name="barang_id" id="rusak_id">
 
-    <label>Jumlah rusak</label>
-    <input name="jumlah" type="number" inputmode="numeric" min="1" value="1" required>
-
-    <label>Tingkat kerusakan</label>
-    <select name="tingkat">
-      <option value="ringan">Rusak ringan — masih bisa dipakai/diperbaiki</option>
-      <option value="berat">Rusak berat — tidak bisa dipakai</option>
+    <label>Jenis</label>
+    <select name="jenis" id="jenis" onchange="gantiJenis()">
+      <option value="rusak">Rusak — barang masih ada</option>
+      <option value="hilang">Hilang — barang tidak ada lagi</option>
     </select>
 
-    <button type="submit" class="sec">Tandai rusak</button>
+    <label>Jumlah</label>
+    <input name="jumlah" type="number" inputmode="numeric" min="1" value="1" required>
+
+    <div id="blok-tingkat">
+      <label>Tingkat kerusakan</label>
+      <select name="tingkat">
+        <option value="ringan">Rusak ringan — masih bisa dipakai/diperbaiki</option>
+        <option value="berat">Rusak berat — tidak bisa dipakai</option>
+      </select>
+    </div>
+
+    <p class="hint" id="info-jenis" style="display:none">
+      Barang hilang akan <b>mengurangi total stok</b> (baik dan total sama-sama turun).
+    </p>
+
+    <label>Keterangan (opsional)</label>
+    <input name="keterangan" maxlength="255" placeholder="mis. gagang patah, jatuh dari rak">
+    <p class="hint">Dicatat di Log aktivitas supaya jelas sebabnya.</p>
+
+    <button type="submit" class="sec">Simpan</button>
   </form>
 </div>
 
@@ -76,6 +93,21 @@ function setup(inpId, hidId){
 }
 setup('cari_restock','restock_id');
 setup('cari_rusak','rusak_id');
+
+// Hide/show blok tingkat sesuai jenis
+window.gantiJenis = function () {
+  const jenis = document.getElementById('jenis').value;
+  const blok = document.getElementById('blok-tingkat');
+  const info = document.getElementById('info-jenis');
+  if (jenis === 'hilang') {
+    blok.style.display = 'none';
+    info.style.display = 'block';
+  } else {
+    blok.style.display = 'block';
+    info.style.display = 'none';
+  }
+};
+gantiJenis();
 
 // Baris dinamis untuk tambah barang baru
 let idx = 0;

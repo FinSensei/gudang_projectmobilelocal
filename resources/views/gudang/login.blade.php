@@ -6,6 +6,10 @@
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f4f6">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111827">
 <meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gudang">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <title>Masuk — Gudang</title>
 <style>
   *{box-sizing:border-box}

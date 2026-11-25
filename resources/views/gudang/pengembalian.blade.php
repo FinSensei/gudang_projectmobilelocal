@@ -59,6 +59,10 @@
             </div>
 
             <p class="baik-info muted" data-role="info" style="margin:6px 0 0">dari {{ $keluar }} barang keluar</p>
+
+            <label style="margin-top:8px">Keterangan kerusakan (opsional)</label>
+            <input name="keterangan[{{ $d->barang_id }}]" maxlength="255"
+                   placeholder="mis. gagang patah, penyok, hilang di acara">
           </div>
         @endforeach
       </div>

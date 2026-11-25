@@ -6,7 +6,7 @@ class DetailPengembalian extends Model {
     protected $table='detail_pengembalian';
     protected $fillable=[
         'pengembalian_id','barang_id',
-        'jumlah_kembali','jumlah_rusak_ringan','jumlah_rusak_berat','jumlah_hilang',
+        'jumlah_kembali','jumlah_rusak_ringan','jumlah_rusak_berat','jumlah_hilang','keterangan',
     ];
     protected $attributes = [
         'jumlah_rusak_ringan' => 0,

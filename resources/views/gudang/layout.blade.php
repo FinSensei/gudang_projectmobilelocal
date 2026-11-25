@@ -6,6 +6,11 @@
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f4f6">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111827">
 <meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gudang">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Gudang</title>
 <style>
@@ -145,13 +150,14 @@
   .baik-hitung .muted{font-size:12px}
 
   /* kartu stok: 4 angka kondisi barang */
-  .stok-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .stok-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:8px;margin-top:10px}
   .stok-box{background:#f8fafc;border:1px solid var(--bd);border-radius:10px;padding:10px 6px;text-align:center}
   .stok-label{display:block;font-size:11px;color:var(--mut);margin-bottom:2px;line-height:1.2}
   .stok-num{font-size:20px}
   .stok-box.baik .stok-num{color:var(--green)}
   .stok-box.ringan .stok-num{color:var(--amber)}
   .stok-box.berat .stok-num{color:var(--red)}
+  .stok-box.keluar .stok-num{color:var(--blue)}
 
   /* ================= Animasi ringan ================= */
   @keyframes gudangFadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}

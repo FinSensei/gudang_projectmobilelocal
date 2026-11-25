@@ -14,6 +14,56 @@
   </div>
 </div>
 
+{{-- Perlu perhatian: reservasi menunggu + stok habis --}}
+@php($perlu = $reservasiPending->count() + $stokHabis->count())
+<div class="card" style="border-color:{{ $perlu > 0 ? 'var(--amber)' : 'var(--bd)' }}">
+  <h2 @if($perlu > 0) style="color:var(--amber)" @endif>
+    Perlu perhatian
+    @if($perlu > 0)<span class="badge aktif">{{ $perlu }}</span>@endif
+  </h2>
+
+  @if($perlu === 0)
+    <p class="muted" style="margin:0">Semua aman — tidak ada reservasi menunggu, tidak ada stok habis.</p>
+  @endif
+
+  @if($reservasiPending->isNotEmpty())
+    <p class="hint" style="margin:0 0 6px">Reservasi menunggu konfirmasi — stok belum dipotong:</p>
+    @foreach($reservasiPending as $r)
+      <div class="item">
+        <div class="top">
+          <b>{{ $r->nama_acara }}</b>
+          <span class="badge aktif">reservasi</span>
+        </div>
+        <div class="muted">{{ $r->tanggal?->format('d M Y') }} · {{ $r->detailAcara->count() }} jenis barang</div>
+        <div class="row-actions">
+          <form method="POST" action="/acara/{{ $r->id }}/konfirmasi" style="margin:0"
+                onsubmit="return confirm('Konfirmasi reservasi ini? Stok akan dipotong.')">
+            @csrf
+            <button type="submit" class="btn sm">Konfirmasi</button>
+          </form>
+          <a href="/acara/{{ $r->id }}/edit" class="btn sm sec">Edit</a>
+        </div>
+      </div>
+    @endforeach
+  @endif
+
+  @if($stokHabis->isNotEmpty())
+    <p class="hint" style="margin:10px 0 6px">Stok baik habis:</p>
+    @foreach($stokHabis as $s)
+      <div class="item">
+        <div class="top">
+          <b>{{ $s->nama_barang }}</b>
+          <span class="badge rusak">habis</span>
+        </div>
+        <div class="muted">kode {{ $s->kode_qr }} · {{ $s->lokasi ?: 'tanpa lokasi' }}</div>
+        <div class="row-actions">
+          <a href="/barang/{{ $s->id }}/edit" class="btn sm sec">Tambah stok</a>
+        </div>
+      </div>
+    @endforeach
+  @endif
+</div>
+
 @if($lowStock->isNotEmpty())
 <div class="card" style="border-color:var(--red)">
   <h2 style="color:var(--red)">Stok habis / menipis</h2>

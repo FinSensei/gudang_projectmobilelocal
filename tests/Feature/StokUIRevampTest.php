@@ -73,6 +73,7 @@ class StokUIRevampTest extends TestCase
         $this->post('/rusak', [
             'barang_id' => $b->id,
             'jumlah'    => 3,
+            'jenis'     => 'rusak',
             'tingkat'   => 'berat',
         ])->assertRedirect();
 
@@ -89,6 +90,7 @@ class StokUIRevampTest extends TestCase
         $this->post('/rusak', [
             'barang_id' => $b->id,
             'jumlah'    => 2,
+            'jenis'     => 'rusak',
             'tingkat'   => 'ringan',
         ])->assertRedirect();
 
