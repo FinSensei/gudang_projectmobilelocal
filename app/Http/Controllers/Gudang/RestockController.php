@@ -68,15 +68,23 @@ class RestockController extends Controller
 
         $b = Barang::findOrFail($data['barang_id']);
 
+        $dipesan = app(StokService::class)->jumlahDipesan($b->id);
+
         // Barang yang sudah dipesan di reservasi tidak boleh ditandai hilang —
         // nanti reservasinya tidak bisa dipenuhi.
-        if ($data['jenis'] === 'hilang') {
-            $dipesan = app(StokService::class)->jumlahDipesan($b->id);
-            if ($dipesan > 0) {
-                return back()
-                    ->withErrors(['jumlah' => "{$b->nama_barang} sedang dipesan/dipakai {$dipesan}. Tidak bisa ditandai hilang."])
-                    ->withInput();
-            }
+        if ($data['jenis'] === 'hilang' && $dipesan > 0) {
+            return back()
+                ->withErrors(['jumlah' => "{$b->nama_barang} sedang dipesan/dipakai {$dipesan}. Tidak bisa ditandai hilang."])
+                ->withInput();
+        }
+
+        // Rusak juga mengurangi stok baik: jangan sampai sisa baik kurang dari
+        // yang sudah dipesan di reservasi.
+        $sisaSetelahRusak = (int) $b->stok_baik - (int) $data['jumlah'];
+        if ($data['jenis'] === 'rusak' && $sisaSetelahRusak < $dipesan) {
+            return back()
+                ->withErrors(['jumlah' => "{$b->nama_barang} masih dipesan {$dipesan}. Stok baik hanya {$b->stok_baik}, sisa setelah rusak {$sisaSetelahRusak}."])
+                ->withInput();
         }
 
         if ($b->stok_baik < $data['jumlah']) {

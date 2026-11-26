@@ -54,7 +54,12 @@ class CheckoutService
             $acara->setRawAttributes($terkunci->getAttributes(), true);
 
             foreach ($acara->detailAcara as $d) {
-                $b = Barang::findOrFail($d->barang_id);
+                // Kunci baris Barang supaya dua konfirmasi bersamaan
+                // tidak mencoret stok yang sama (lost update).
+                $b = Barang::whereKey($d->barang_id)->lockForUpdate()->first();
+                if (!$b) {
+                    throw new \RuntimeException('Barang tidak ditemukan.');
+                }
                 if ($b->stok_baik < $d->jumlah_keluar) {
                     throw new \RuntimeException(
                         "Stok {$b->nama_barang} tidak cukup (baik {$b->stok_baik}, butuh {$d->jumlah_keluar})."
