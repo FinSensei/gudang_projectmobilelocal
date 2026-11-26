@@ -23,9 +23,11 @@ class PengembalianService
      * dipotong dari rusak berat dulu, lalu ringan, terakhir baik — supaya
      * laporan tidak pernah mengarang barang.
      */
-    public function hitung(Pengembalian $p): void
+    public function hitung(Pengembalian $p): array
     {
-        DB::transaction(function () use ($p) {
+        $penyesuaian = [];
+
+        DB::transaction(function () use ($p, &$penyesuaian) {
             $p->load(['acara', 'detailPengembalian.barang']);
             $acaraIds = $p->acara->pluck('id')->all();
 
@@ -45,6 +47,7 @@ class PengembalianService
                 $berat = (int) $detail->jumlah_rusak_berat;
 
                 // Tidak boleh lebih banyak dari yang keluar
+                $inputAwalKembali = $baik;
                 $lebih = ($baik + $ringan + $berat) - $qtyOut;
                 if ($lebih > 0) {
                     $potong = min($berat, $lebih);
@@ -74,6 +77,14 @@ class PengembalianService
                         'entitas' => 'detail_pengembalian',
                         'keterangan' => "detail #{$detail->id}: input disesuaikan agar tidak melebihi jumlah keluar ({$qtyOut})",
                     ]);
+
+                    $penyesuaian[] = [
+                        'barang_id' => $detail->barang_id,
+                        'nama_barang' => $detail->barang->nama_barang,
+                        'input_kembali' => $inputAwalKembali,
+                        'dijadikan' => $baik,
+                        'qty_out' => $qtyOut,
+                    ];
                 }
 
                 $barang = $detail->barang; // sudah di-load via eager loading di atas
@@ -86,5 +97,7 @@ class PengembalianService
 
             Acara::whereIn('id', $acaraIds)->update(['status' => 'selesai']);
         });
+
+        return $penyesuaian;
     }
 }

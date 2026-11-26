@@ -166,14 +166,24 @@ class PengembalianController extends Controller
                     ]);
                 }
 
-                app(PengembalianService::class)->hitung($p);
+                $penyesuaian = app(PengembalianService::class)->hitung($p);
                 LogAktivitas::create(['aksi' => 'pengembalian', 'entitas' => 'pengembalian', 'keterangan' => 'batch #'.$p->id]);
             });
         } catch (\RuntimeException $e) {
             return back()->withErrors(['acara_ids' => $e->getMessage()])->withInput();
         }
 
-        return redirect('/')->with('ok', 'Pengembalian disimpan, stok diperbarui.');
+        // Tampilkan peringatan di layar kalau ada input yang disesuaikan otomatis
+        $pesanOk = 'Pengembalian disimpan, stok diperbarui.';
+        if (!empty($penyesuaian)) {
+            $daftar = [];
+            foreach ($penyesuaian as $pen) {
+                $daftar[] = "{$pen['nama_barang']}: Anda isi kembali {$pen['input_kembali']}, tapi yang keluar cuma {$pen['qty_out']}. Kami ubah jadi {$pen['dijadikan']}.";
+            }
+            $pesanOk .= ' Perhatian: ' . implode(' ', $daftar);
+        }
+
+        return redirect('/')->with('ok', $pesanOk);
     }
 
     /** Undo pengembalian: kembalikan stok & status acara ke aktif */
