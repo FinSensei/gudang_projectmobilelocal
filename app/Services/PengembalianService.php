@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Pengembalian;
 use App\Models\Acara;
 use App\Models\DetailAcara;
+use App\Models\Pengembalian;
 use Illuminate\Support\Facades\DB;
 
 class PengembalianService
@@ -32,9 +32,9 @@ class PengembalianService
                     ->where('barang_id', $detail->barang_id)
                     ->sum('jumlah_keluar');
 
-                $baik   = (int) $detail->jumlah_kembali;
+                $baik = (int) $detail->jumlah_kembali;
                 $ringan = (int) $detail->jumlah_rusak_ringan;
-                $berat  = (int) $detail->jumlah_rusak_berat;
+                $berat = (int) $detail->jumlah_rusak_berat;
 
                 // Tidak boleh lebih banyak dari yang keluar
                 $lebih = ($baik + $ringan + $berat) - $qtyOut;
@@ -52,17 +52,17 @@ class PengembalianService
 
                 $hilang = $qtyOut - ($baik + $ringan + $berat);
 
-                $detail->jumlah_kembali      = $baik;
+                $detail->jumlah_kembali = $baik;
                 $detail->jumlah_rusak_ringan = $ringan;
-                $detail->jumlah_rusak_berat  = $berat;
-                $detail->jumlah_hilang       = $hilang;
+                $detail->jumlah_rusak_berat = $berat;
+                $detail->jumlah_hilang = $hilang;
                 $detail->save();
 
                 $barang = $detail->barang;
-                $barang->stok_baik           += $baik;
-                $barang->stok_rusak_ringan   += $ringan;
-                $barang->stok_rusak_berat    += $berat;
-                $barang->stok_total          -= $hilang;
+                $barang->stok_baik += $baik;
+                $barang->stok_rusak_ringan += $ringan;
+                $barang->stok_rusak_berat += $berat;
+                $barang->stok_total -= $hilang;
                 $barang->save();
             }
 

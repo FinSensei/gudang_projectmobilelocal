@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pengembalian extends Model
 {
-    use \Illuminate\Database\Eloquent\SoftDeletes;
+    use SoftDeletes;
 
     protected $table = 'pengembalian';
+
     protected $fillable = ['tanggal_pulang', 'dicatat_oleh', 'catatan'];
 
     protected function casts(): array
@@ -33,19 +35,20 @@ class Pengembalian extends Model
     {
         $acaraIds = $this->acara->pluck('id')->all();
         $outMap = [];
-        \App\Models\DetailAcara::whereIn('acara_id', $acaraIds)->get()->each(function ($d) use (&$outMap) {
+        DetailAcara::whereIn('acara_id', $acaraIds)->get()->each(function ($d) use (&$outMap) {
             $outMap[$d->barang_id] = ($outMap[$d->barang_id] ?? 0) + $d->jumlah_keluar;
         });
         $rows = [];
         foreach ($this->detailPengembalian as $detail) {
             $rows[] = [
-                'barang'  => $detail->barang->nama_barang,
-                'keluar'  => $outMap[$detail->barang_id] ?? 0,
+                'barang' => $detail->barang->nama_barang,
+                'keluar' => $outMap[$detail->barang_id] ?? 0,
                 'kembali' => $detail->jumlah_kembali,
-                'hilang'  => $detail->jumlah_hilang,
+                'hilang' => $detail->jumlah_hilang,
                 'tersedia' => $detail->barang->stok_baik,
             ];
         }
+
         return $rows;
     }
 }

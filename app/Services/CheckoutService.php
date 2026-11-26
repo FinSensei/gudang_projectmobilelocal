@@ -28,8 +28,8 @@ class CheckoutService
                 }
 
                 DetailAcara::create([
-                    'acara_id'     => $acara->id,
-                    'barang_id'    => $it['barang_id'],
+                    'acara_id' => $acara->id,
+                    'barang_id' => $it['barang_id'],
                     'jumlah_keluar' => $it['jumlah'],
                 ]);
             }
@@ -47,7 +47,7 @@ class CheckoutService
             // Kunci baris acara: dua admin tidak bisa konfirmasi bersamaan
             $terkunci = Acara::whereKey($acara->id)->lockForUpdate()->first();
 
-            if (!$terkunci || $terkunci->status !== 'reservasi') {
+            if (! $terkunci || $terkunci->status !== 'reservasi') {
                 throw new \RuntimeException('Acara tidak berstatus reservasi.');
             }
 
@@ -84,8 +84,8 @@ class CheckoutService
                 $b->stok_baik -= $it['jumlah'];
                 $b->save();
                 DetailAcara::create([
-                    'acara_id'    => $acara->id,
-                    'barang_id'   => $b->id,
+                    'acara_id' => $acara->id,
+                    'barang_id' => $b->id,
                     'jumlah_keluar' => $it['jumlah'],
                 ]);
             }

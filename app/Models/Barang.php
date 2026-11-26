@@ -3,15 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Barang extends Model
 {
     use SoftDeletes;
 
     protected $table = 'barang';
+
     protected $fillable = [
         'kategori_id', 'nama_barang', 'satuan', 'ukuran', 'kode_qr',
         'stok_total', 'stok_baik', 'stok_rusak_ringan', 'stok_rusak_berat',
@@ -20,18 +21,18 @@ class Barang extends Model
 
     /** Nilai default saat create tanpa menyertakan ukuran */
     protected $attributes = [
-        'ukuran'            => 'N/A',
+        'ukuran' => 'N/A',
         'stok_rusak_ringan' => 0,
-        'stok_rusak_berat'  => 0,
+        'stok_rusak_berat' => 0,
     ];
 
     protected function casts(): array
     {
         return [
-            'stok_total'          => 'integer',
-            'stok_baik'           => 'integer',
-            'stok_rusak_ringan'   => 'integer',
-            'stok_rusak_berat'    => 'integer',
+            'stok_total' => 'integer',
+            'stok_baik' => 'integer',
+            'stok_rusak_ringan' => 'integer',
+            'stok_rusak_berat' => 'integer',
         ];
     }
 
@@ -80,6 +81,7 @@ class Barang extends Model
         if ($this->stok_total > 0 && $this->stok_baik < $this->stok_total * 0.1) {
             return 'menipis';
         }
+
         return 'aman';
     }
 }

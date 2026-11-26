@@ -10,6 +10,7 @@ class LogAktivitas extends Model
     public const MAX_ROWS = 100;
 
     protected $table = 'log_aktivitas';
+
     protected $fillable = ['aksi', 'entitas', 'keterangan'];
 
     protected static function booted(): void

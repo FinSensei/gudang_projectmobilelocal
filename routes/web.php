@@ -1,8 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\GudangController;
+use App\Http\Controllers\Gudang\AcaraController;
+use App\Http\Controllers\Gudang\BarangController;
+use App\Http\Controllers\Gudang\DashboardController;
+use App\Http\Controllers\Gudang\LaporanController;
+use App\Http\Controllers\Gudang\PengembalianController;
+use App\Http\Controllers\Gudang\RestockController;
 use App\Http\Controllers\LoginController;
+use Illuminate\Support\Facades\Route;
 
 // ---------- PWA manifest ----------
 Route::get('/manifest.webmanifest', function () {
@@ -24,59 +29,69 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     // Scan QR — boleh admin & pekerja
-    Route::get('/b/{kode}', [GudangController::class, 'scan'])->name('scan');
-    Route::get('/scan', [GudangController::class, 'scanPage'])->name('scanpage');
+    Route::get('/b/{kode}', [BarangController::class, 'scan'])->name('scan');
+    Route::get('/scan', [BarangController::class, 'scanPage'])->name('scanpage');
 
     // ---------- Khusus admin ----------
     Route::middleware('role:admin')->group(function () {
-        Route::get('/', [GudangController::class, 'index']);
+        // Dashboard
+        Route::get('/', [DashboardController::class, 'index']);
 
-        Route::get('/barang', [GudangController::class, 'barangForm'])->name('barang');
-        Route::post('/barang', [GudangController::class, 'barangStore']);
-        Route::get('/barang/{id}/edit', [GudangController::class, 'barangEdit']);
-        Route::get('/barang/{id}/riwayat', [GudangController::class, 'barangRiwayat']);
-        Route::put('/barang/{id}', [GudangController::class, 'barangUpdate']);
-        Route::post('/barang/{id}/kurangi', [GudangController::class, 'barangKurangi']);
-        Route::post('/barang/{id}/tambah', [GudangController::class, 'barangTambah']);
-        Route::delete('/barang/{id}', [GudangController::class, 'barangDestroy']);
+        // Barang
+        Route::get('/barang', [BarangController::class, 'form'])->name('barang');
+        Route::post('/barang', [BarangController::class, 'store']);
+        Route::get('/barang/{id}/edit', [BarangController::class, 'edit']);
+        Route::get('/barang/{id}/riwayat', [BarangController::class, 'riwayat']);
+        Route::put('/barang/{id}', [BarangController::class, 'update']);
+        Route::post('/barang/{id}/kurangi', [BarangController::class, 'kurangi']);
+        Route::post('/barang/{id}/tambah', [BarangController::class, 'tambah']);
+        Route::delete('/barang/{id}', [BarangController::class, 'destroy']);
 
-        Route::get('/restock', [GudangController::class, 'restockForm'])->name('restock');
-        Route::post('/restock', [GudangController::class, 'restockStore']);
+        // Restock / stok
+        Route::get('/restock', [RestockController::class, 'form'])->name('restock');
+        Route::post('/restock', [RestockController::class, 'store']);
+        Route::post('/rusak', [RestockController::class, 'rusak']);
+        Route::post('/stok/sinkron', [RestockController::class, 'sinkron']);
 
-        Route::post('/rusak', [GudangController::class, 'rusakStore']);
-        Route::post('/stok/sinkron', [GudangController::class, 'stokSinkron']);
+        // Acara
+        Route::get('/acara', [AcaraController::class, 'form'])->name('acara');
+        Route::post('/acara', [AcaraController::class, 'store']);
+        Route::get('/acara/{id}/edit', [AcaraController::class, 'edit']);
+        Route::put('/acara/{id}', [AcaraController::class, 'update']);
+        Route::post('/acara/{id}/konfirmasi', [AcaraController::class, 'konfirmasi']);
+        Route::post('/acara/{id}/batalkan', [AcaraController::class, 'batalkan']);
 
-        Route::get('/acara', [GudangController::class, 'acaraForm'])->name('acara');
-        Route::post('/acara', [GudangController::class, 'acaraStore']);
-        Route::get('/acara/{id}/edit', [GudangController::class, 'acaraEdit']);
-        Route::put('/acara/{id}', [GudangController::class, 'acaraUpdate']);
-        Route::post('/acara/{id}/konfirmasi', [GudangController::class, 'acaraKonfirmasi']);
-        Route::post('/acara/{id}/batalkan', [GudangController::class, 'acaraBatalkan']);
+        // Pengembalian
+        Route::get('/pengembalian', [PengembalianController::class, 'form'])->name('pengembalian');
+        Route::post('/pengembalian/preview', [PengembalianController::class, 'preview']);
+        Route::post('/pengembalian', [PengembalianController::class, 'store']);
+        Route::post('/pengembalian/{id}/undo', [PengembalianController::class, 'undo']);
 
-        Route::get('/pengembalian', [GudangController::class, 'pengembalianForm'])->name('pengembalian');
-        Route::post('/pengembalian/preview', [GudangController::class, 'pengembalianPreview']);
-        Route::post('/pengembalian', [GudangController::class, 'pengembalianStore']);
-        Route::post('/pengembalian/{id}/undo', [GudangController::class, 'pengembalianUndo']);
+        // Proses (barang sedang di acara)
+        Route::get('/proses', [AcaraController::class, 'prosesIndex'])->name('proses');
+        Route::get('/proses/{id}', [AcaraController::class, 'prosesDetail'])->whereNumber('id');
 
-        Route::get('/proses', [GudangController::class, 'prosesIndex'])->name('proses');
-        Route::get('/proses/{id}', [GudangController::class, 'prosesDetail'])->whereNumber('id');
+        // Kategori
+        Route::get('/kategori', [LaporanController::class, 'kategoriIndex'])->name('kategori');
+        Route::post('/kategori', [LaporanController::class, 'kategoriStore']);
+        Route::put('/kategori/{id}', [LaporanController::class, 'kategoriUpdate']);
+        Route::delete('/kategori/{id}', [LaporanController::class, 'kategoriDestroy']);
 
-        Route::get('/kategori', [GudangController::class, 'kategoriIndex'])->name('kategori');
-        Route::post('/kategori', [GudangController::class, 'kategoriStore']);
-        Route::put('/kategori/{id}', [GudangController::class, 'kategoriUpdate']);
-        Route::delete('/kategori/{id}', [GudangController::class, 'kategoriDestroy']);
+        // Riwayat & ekspor
+        Route::get('/riwayat', [LaporanController::class, 'riwayat'])->name('riwayat');
+        Route::get('/riwayat/pdf', [LaporanController::class, 'riwayatPdf']);
+        Route::get('/riwayat/excel', [LaporanController::class, 'riwayatExcel']);
+        Route::get('/stok/excel', [LaporanController::class, 'stokExcel']);
+        Route::get('/riwayat/{id}', [LaporanController::class, 'riwayatDetail'])->whereNumber('id');
 
-        Route::get('/riwayat', [GudangController::class, 'riwayat'])->name('riwayat');
-        Route::get('/riwayat/pdf', [GudangController::class, 'riwayatPdf']);
-        Route::get('/riwayat/excel', [GudangController::class, 'riwayatExcel']);
-        Route::get('/stok/excel', [GudangController::class, 'stokExcel']);
-        Route::get('/riwayat/{id}', [GudangController::class, 'riwayatDetail'])->whereNumber('id');
+        // Log aktivitas
+        Route::get('/log', [LaporanController::class, 'log'])->name('log');
+        Route::get('/log/export', [LaporanController::class, 'logExport']);
 
-        Route::get('/log', [GudangController::class, 'log'])->name('log');
-        Route::get('/log/export', [GudangController::class, 'logExport']);
+        // QR
+        Route::get('/qr', [BarangController::class, 'qrPage'])->name('qr');
 
-        Route::get('/qr', [GudangController::class, 'qrPage'])->name('qr');
-
+        // Kelola user
         Route::get('/users', [LoginController::class, 'indexUsers']);
         Route::post('/users', [LoginController::class, 'storeUser']);
         Route::put('/users/{id}', [LoginController::class, 'updateUser']);

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\LogAktivitas;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -15,20 +15,21 @@ class LoginController extends Controller
         if (Auth::check()) {
             return redirect('/');
         }
+
         return view('gudang.login');
     }
 
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $request->session()->regenerateToken();
-            LogAktivitas::create(['aksi'=>'login','entitas'=>'user','keterangan'=>auth()->user()->name]);
+            LogAktivitas::create(['aksi' => 'login', 'entitas' => 'user', 'keterangan' => auth()->user()->name]);
 
             // Pekerja tidak punya akses dashboard -> arahkan ke halaman scan
             $target = auth()->user()->role === 'admin' ? '/' : '/scan';
@@ -44,6 +45,7 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/login');
     }
 
@@ -51,6 +53,7 @@ class LoginController extends Controller
     public function indexUsers()
     {
         $users = User::orderBy('name')->get();
+
         return view('gudang.users', compact('users'));
     }
 
@@ -58,17 +61,17 @@ class LoginController extends Controller
     public function storeUser(Request $request)
     {
         $data = $request->validate([
-            'name'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:users,email',
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
-            'role'     => 'required|in:admin,pekerja',
+            'role' => 'required|in:admin,pekerja',
         ]);
 
         User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
+            'name' => $data['name'],
+            'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role'     => $data['role'],
+            'role' => $data['role'],
         ]);
 
         return back()->with('ok', "User {$data['name']} dibuat ({$data['role']}).");
@@ -80,9 +83,9 @@ class LoginController extends Controller
         $user = User::findOrFail($id);
 
         $data = $request->validate([
-            'name'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:users,email,'.$user->id,
-            'role'     => 'required|in:admin,pekerja',
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|unique:users,email,'.$user->id,
+            'role' => 'required|in:admin,pekerja',
             'password' => 'nullable|string|min:6',
         ]);
 
@@ -91,11 +94,11 @@ class LoginController extends Controller
             return back()->with('err', 'Anda tidak bisa mengubah role akun sendiri.')->withInput();
         }
 
-        $user->name  = $data['name'];
+        $user->name = $data['name'];
         $user->email = $data['email'];
-        $user->role  = $data['role'];
+        $user->role = $data['role'];
 
-        if (!empty($data['password'])) {
+        if (! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
         }
 

@@ -2,26 +2,30 @@
 
 namespace App\Services;
 
-use App\Models\Barang;
 use App\Models\Acara;
+use App\Models\Barang;
 use App\Models\DetailAcara;
 use App\Models\LogAktivitas;
 use App\Models\Pengembalian;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ExcelExportService
 {
     private const HEADER_FILL = 'FF1F6FEB';   // biru
-    private const HEADER_TEXT = 'FFFFFFFF';
-    private const ALT_FILL    = 'FFF3F6FB';   // abu sangat muda
-    private const LINE        = 'FFD1D5DB';
 
-        /**
+    private const HEADER_TEXT = 'FFFFFFFF';
+
+    private const ALT_FILL = 'FFF3F6FB';   // abu sangat muda
+
+    private const LINE = 'FFD1D5DB';
+
+    /**
      * Peta barang_id => total jumlah keluar di acara aktif.
      * Dihitung sekali (2 query) supaya tidak N+1 saat loop ratusan barang.
      */
@@ -39,13 +43,14 @@ class ExcelExportService
 
     private function base(): Spreadsheet
     {
-        $ss = new Spreadsheet();
+        $ss = new Spreadsheet;
         $ss->getDefaultStyle()->getFont()->setName('Calibri')->setSize(11);
+
         return $ss;
     }
 
     /** Header tebal + biru + teks putih + border */
-    private function styleHeader(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, string $range): void
+    private function styleHeader(Worksheet $sheet, string $range): void
     {
         $sheet->getStyle($range)->getFont()->setBold(true)->getColor()->setARGB(self::HEADER_TEXT);
         $sheet->getStyle($range)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB(self::HEADER_FILL);
@@ -55,10 +60,12 @@ class ExcelExportService
     }
 
     /** Baris bergantian + border tipis */
-    private function styleBody(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, int $fromRow, int $toRow, int $cols): void
+    private function styleBody(Worksheet $sheet, int $fromRow, int $toRow, int $cols): void
     {
-        if ($toRow < $fromRow) return;
-        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cols);
+        if ($toRow < $fromRow) {
+            return;
+        }
+        $lastCol = Coordinate::stringFromColumnIndex($cols);
 
         $sheet->getStyle("A{$fromRow}:{$lastCol}{$toRow}")
             ->getBorders()->getAllBorders()
@@ -94,6 +101,7 @@ class ExcelExportService
 
         if ($pengembalian->isEmpty()) {
             $sheet->fromArray(['Belum ada pengembalian.'], null, 'A3');
+
             return new Xlsx($ss);
         }
 
@@ -173,7 +181,7 @@ class ExcelExportService
         $this->styleHeader($sheet, "A{$headerRow}:E{$headerRow}");
 
         $row = $headerRow + 1;
-        $no  = 0;
+        $no = 0;
 
         LogAktivitas::orderByDesc('id')
             ->limit(LogAktivitas::MAX_ROWS)
@@ -193,7 +201,7 @@ class ExcelExportService
         $this->styleBody($sheet, $headerRow + 1, $row - 1, 5);
 
         // kolom Waktu rata tengah, angka No rata kanan
-        $sheet->getStyle('A'.($headerRow+1).':A'.($row-1))
+        $sheet->getStyle('A'.($headerRow + 1).':A'.($row - 1))
             ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
         for ($c = 'A'; $c <= 'E'; $c++) {
@@ -228,8 +236,12 @@ class ExcelExportService
             $no++;
             $keluar = (int) ($keluarMap[$b->id] ?? 0);
             $ket = [];
-            if ($keluar > 0) $ket[] = "keluar {$keluar}";
-            if ($b->statusStok() !== 'aman') $ket[] = $b->statusStok();
+            if ($keluar > 0) {
+                $ket[] = "keluar {$keluar}";
+            }
+            if ($b->statusStok() !== 'aman') {
+                $ket[] = $b->statusStok();
+            }
 
             $sheet->fromArray([
                 $no,
@@ -248,7 +260,7 @@ class ExcelExportService
         $this->styleBody($sheet, $headerRow + 1, $row - 1, 9);
 
         // kolom angka rata kanan
-        $sheet->getStyle('E'.($headerRow+1).':G'.($row-1))
+        $sheet->getStyle('E'.($headerRow + 1).':G'.($row - 1))
             ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
         for ($c = 'A'; $c <= 'I'; $c++) {

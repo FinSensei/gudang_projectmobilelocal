@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Gudang">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icon-192.png">
-<title>Masuk — Gudang</title>
+<title>Masuk</title>
 <style>
   *{box-sizing:border-box}
 
@@ -31,7 +31,7 @@
 
   .box{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:28px;max-width:380px;width:100%}
   h1{font-size:22px;margin:0 0 4px}
-  .hint{font-size:14px;color:#4b5563;margin:0 0 18px}
+  .hint{font-size:15px;color:#4b5563;margin:0 0 18px;line-height:1.5}
   label{font-size:15px;color:#374151;display:block;margin:12px 0 6px;font-weight:600}
   input{width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:10px;font-size:17px;min-height:50px}
   button{width:100%;background:#1f6feb;color:#fff;border:0;border-radius:12px;padding:15px;font-size:17px;font-weight:600;cursor:pointer;margin-top:18px;min-height:54px;

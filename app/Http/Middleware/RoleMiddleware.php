@@ -16,11 +16,11 @@ class RoleMiddleware
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect('/login');
         }
 
-        if (!empty($roles) && !in_array($user->role, $roles, true)) {
+        if (! empty($roles) && ! in_array($user->role, $roles, true)) {
             abort(403, 'Anda tidak punya akses ke halaman ini.');
         }
 
