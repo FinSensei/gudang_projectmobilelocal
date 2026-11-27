@@ -225,6 +225,28 @@
     }
   }
 
+  /* collapse barang item di dashboard */
+  .barang-head{cursor:pointer;display:flex;flex-direction:column;gap:6px}
+  .barang-head:active{background:#f3f4f6;border-radius:8px}
+  .barang-toggle{font-size:12px;line-height:1}
+  .barang-body{border-top:1px solid var(--bd);margin-top:6px;padding-top:8px;animation:gudangFadeUp .2s ease both}
+
+  /* collapse pengembalian barang */
+  .retur-head{cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--bd);border-radius:10px;background:#fcfcfd;margin-bottom:8px}
+  .retur-head:active{background:#eef2f7}
+  .retur-toggle{font-size:12px;line-height:1}
+  .retur-body{border-top:1px solid var(--bd);margin-top:6px;padding-top:8px;animation:gudangFadeUp .2s ease both}
+  .retur-inputs{display:flex;flex-direction:column;gap:6px}
+  .retur-input{width:100%}
+  .retur-input label{font-size:13px;color:var(--mut);margin-bottom:2px;display:block}
+  .retur-input input{font-size:16px;padding:10px;border:1px solid var(--bd);border-radius:8px;width:100%;background:#fff}
+
+  @media (min-width: 481px) {
+    .retur-inputs{flex-direction:row;flex-wrap:wrap;gap:8px}
+    .retur-input{flex:1;min-width:0}
+    .retur-input input{width:100%}
+  }
+
   /* hormati pengaturan reduce-motion */
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{

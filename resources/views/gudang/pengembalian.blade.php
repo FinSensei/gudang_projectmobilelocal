@@ -30,40 +30,43 @@
         @foreach($a->detailAcara as $d)
           @php($keluar = (int) $d->jumlah_keluar)
           <div class="retur-row" data-keluar="{{ $keluar }}">
-            <div class="retur-nama">
-              <b>{{ $d->barang->nama_barang }}</b>
-              <span class="muted">keluar {{ $keluar }}</span>
+            <div class="retur-head" onclick="toggleRetur('{{ $d->barang_id }}')">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="retur-toggle">▸</span>
+                <b>{{ $d->barang->nama_barang }}</b>
+              </div>
+              <div class="muted">keluar {{ $keluar }} · baik {{ $keluar }}</div>
             </div>
+            <div class="retur-body" id="retur-body-{{ $d->barang_id }}" style="display:none">
+              <div class="retur-inputs">
+                <div class="retur-input">
+                  <label>Baik <span class="muted" style="font-weight:400">(otomatis)</span></label>
+                  <input data-role="baik" type="number" readonly tabindex="-1"
+                         value="{{ $keluar }}" class="baik-input">
+                </div>
+                <div class="retur-input">
+                  <label>Rusak Ringan</label>
+                  <input name="rusak_ringan[{{ $d->barang_id }}]" type="number" inputmode="numeric"
+                         min="0" max="{{ $keluar }}" value="0" data-role="ringan">
+                </div>
+                <div class="retur-input">
+                  <label>Rusak Berat</label>
+                  <input name="rusak_berat[{{ $d->barang_id }}]" type="number" inputmode="numeric"
+                         min="0" max="{{ $keluar }}" value="0" data-role="berat">
+                </div>
+                <div class="retur-input">
+                  <label>Hilang</label>
+                  <input name="hilang[{{ $d->barang_id }}]" type="number" inputmode="numeric"
+                         min="0" max="{{ $keluar }}" value="0" data-role="hilang">
+                </div>
+              </div>
 
-            <div class="row" style="margin-top:6px">
-              <div style="flex:1;min-width:92px">
-                <label>Baik <span class="muted" style="font-weight:400">(otomatis)</span></label>
-                <input data-role="baik" type="number" readonly tabindex="-1"
-                       value="{{ $keluar }}" class="baik-input">
-              </div>
-              <div style="flex:1;min-width:92px">
-                <label>Rusak Ringan</label>
-                <input name="rusak_ringan[{{ $d->barang_id }}]" type="number" inputmode="numeric"
-                       min="0" max="{{ $keluar }}" value="0" data-role="ringan">
-              </div>
-              <div style="flex:1;min-width:92px">
-                <label>Rusak Berat</label>
-                <input name="rusak_berat[{{ $d->barang_id }}]" type="number" inputmode="numeric"
-                       min="0" max="{{ $keluar }}" value="0" data-role="berat">
-              </div>
-              <div style="flex:1;min-width:92px">
-                <label>Hilang</label>
-                <input name="hilang[{{ $d->barang_id }}]" type="number" inputmode="numeric"
-                       min="0" max="{{ $keluar }}" value="0" data-role="hilang">
-              </div>
-            </div>
+              <p class="baik-info muted" data-role="info" style="margin:6px 0 0">dari {{ $keluar }} barang keluar</p>
 
-            <p class="baik-info muted" data-role="info" style="margin:6px 0 0">dari {{ $keluar }} barang keluar</p>
-
-            <label style="margin-top:8px">Keterangan kerusakan (opsional)</label>
-            <input name="keterangan[{{ $d->barang_id }}]" maxlength="255"
-                   placeholder="mis. gagang patah, penyok, hilang di acara">
-          </div>
+              <label style="margin-top:8px">Keterangan kerusakan (opsional)</label>
+              <input name="keterangan[{{ $d->barang_id }}]" maxlength="255"
+                     placeholder="mis. gagang patah, penyok, hilang di acara">
+            </div>            </div>
         @endforeach
       </div>
     @endforeach
@@ -111,7 +114,34 @@
       btn.disabled = true;
       btn.textContent = 'Memproses...';
     });
+
+    // Pulihkan status collapse dari localStorage
+    document.querySelectorAll('.retur-body').forEach(function (body) {
+      var id = body.id.replace('retur-body-', '');
+      try {
+        var saved = localStorage.getItem('gudang_retur_' + id);
+        if (saved === '0') {
+          body.style.display = 'none';
+          var row = body.closest('.retur-row');
+          if (row) row.querySelector('.retur-toggle').textContent = '▸';
+        }
+      } catch (e) {}
+    });
   })();
+
+  // Fungsi toggleRetur harus di scope global (bukan dalam IIFE)
+  // agar onclick="toggleRetur(...)" di HTML bisa memanggilnya
+  function toggleRetur(id) {
+    var body = document.getElementById('retur-body-' + id);
+    var row = body.closest('.retur-row');
+    var tgl = row.querySelector('.retur-toggle');
+    var hidden = body.style.display === 'none';
+    body.style.display = hidden ? 'block' : 'none';
+    tgl.textContent = hidden ? '▼' : '▸';
+    try {
+      localStorage.setItem('gudang_retur_' + id, hidden ? '1' : '0');
+    } catch (e) {}
+  }
   </script>
   @endif
 </div>

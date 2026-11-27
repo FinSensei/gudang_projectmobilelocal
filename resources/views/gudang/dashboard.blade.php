@@ -149,10 +149,15 @@
     <ul class="list">
       @foreach($barang as $b)
         @php($st = ($keluarMap[$b->id] ?? 0) > 0 ? 'sedang digunakan' : 'tersedia')
-        <li>
-          <div>
-            <b style="font-size:17px">{{ $b->nama_barang }}</b>
+        <li class="barang-item" data-id="{{ $b->id }}">
+          <div class="barang-head" onclick="toggleBarang('{{ $b->id }}')">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="barang-toggle">▸</span>
+              <b style="font-size:17px">{{ $b->nama_barang }}</b>
+            </div>
             <div class="muted">{{ $b->lokasi ?: 'tanpa lokasi' }} · baik <span class="green">{{ $b->stok_baik }}</span></div>
+          </div>
+          <div class="barang-body" id="barang-body-{{ $b->id }}" style="display:none">
             <div class="aksi-barang" style="margin-top:6px">
               <a href="/barang/{{ $b->id }}/edit" class="aksi-barang selesai">Edit</a>
               <a href="/barang/{{ $b->id }}/riwayat" class="aksi-barang selesai">Riwayat</a>
@@ -162,7 +167,7 @@
               </form>
             </div>
           </div>
-          <div style="text-align:right">
+          <div style="text-align:right;margin-top:6px">
             <div class="num {{ $st==='sedang digunakan' ? 'amber' : 'green' }}">{{ $b->stok_total }}</div>
             <span class="badge {{ $st==='sedang digunakan' ? 'aktif' : 'selesai' }}">{{ $st }}</span>
           </div>
@@ -172,4 +177,27 @@
     </div>
   @endif
 </div>
+<script>
+  function toggleBarang(id) {
+    var body = document.getElementById('barang-body-' + id);
+    var toggle = document.querySelector('[data-id="' + id + '"] .barang-toggle');
+    var hidden = body.style.display === 'none';
+    body.style.display = hidden ? 'block' : 'none';
+    toggle.textContent = hidden ? '▾' : '▸';
+    try {
+      localStorage.setItem('gudang_barang_' + id, hidden ? '1' : '0');
+    } catch (e) {}
+  }
+
+  document.querySelectorAll('[data-id]').forEach(function (li) {
+    var id = li.getAttribute('data-id');
+    try {
+      var saved = localStorage.getItem('gudang_barang_' + id);
+      if (saved === '0') {
+        document.getElementById('barang-body-' + id).style.display = 'none';
+        li.querySelector('.barang-toggle').textContent = '▸';
+      }
+    } catch (e) {}
+  });
+</script>
 @endsection
