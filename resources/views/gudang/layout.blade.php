@@ -201,6 +201,30 @@
   /* badge & angka hilang muncul */
   .badge,.hi{animation:gudangPop .2s ease both}
 
+  /* form pengembalian di HP: susun 4 input vertikal agar tidak berdempet */
+  @media (max-width: 480px) {
+    .retur-row .row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+    }
+    .retur-row .row > div {
+      min-width: 0 !important;
+      width: 100% !important;
+      margin-bottom: 0;
+    }
+    .retur-row .row label {
+      font-size: 13px;
+      margin-bottom: 2px;
+      display: block;
+    }
+    .retur-row .baik-input,
+    .retur-row input[data-role] {
+      font-size: 16px;
+      padding: 10px;
+    }
+  }
+
   /* hormati pengaturan reduce-motion */
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{
