@@ -16,8 +16,8 @@
 
 {{-- Perlu perhatian: reservasi menunggu + stok habis --}}
 @php($perlu = $reservasiPending->count() + $stokHabis->count())
-<div class="card" style="border-color:{{ $perlu > 0 ? 'var(--amber)' : 'var(--bd)' }}">
-  <h2 @if($perlu > 0) style="color:var(--amber)" @endif>
+<div class="card {{ $perlu > 0 ? 'amber' : '' }}">
+  <h2 {{ $perlu > 0 ? 'class="amber-text"' : '' }}>
     Perlu perhatian
     @if($perlu > 0)<span class="badge aktif">{{ $perlu }}</span>@endif
   </h2>
@@ -27,7 +27,7 @@
   @endif
 
   @if($reservasiPending->isNotEmpty())
-    <p class="hint" style="margin:0 0 6px">Reservasi menunggu konfirmasi — stok belum dipotong:</p>
+    <p class="hint-sm">Reservasi menunggu konfirmasi — stok belum dipotong:</p>
     @foreach($reservasiPending as $r)
       <div class="item">
         <div class="top">
@@ -48,7 +48,7 @@
   @endif
 
   @if($stokHabis->isNotEmpty())
-    <p class="hint" style="margin:10px 0 6px">Stok baik habis:</p>
+    <p class="hint-sm">Stok baik habis:</p>
     @foreach($stokHabis as $s)
       <div class="item">
         <div class="top">
@@ -97,7 +97,7 @@
     <span class="qa-ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
     Buat acara (barang keluar)
   </a>
-  <a href="/restock" class="qa-purple">
+  <a href="/restock" class="qa-amber">
     <span class="qa-ic"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8"/></svg></span>
     Tambah stok
   </a>
@@ -153,12 +153,12 @@
           <div>
             <b style="font-size:17px">{{ $b->nama_barang }}</b>
             <div class="muted">{{ $b->lokasi ?: 'tanpa lokasi' }} · baik <span class="green">{{ $b->stok_baik }}</span></div>
-            <div style="margin-top:6px;display:flex;gap:6px">
-              <a href="/barang/{{ $b->id }}/edit" class="badge selesai" style="text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 10px">Edit</a>
-              <a href="/barang/{{ $b->id }}/riwayat" class="badge selesai" style="text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 10px">Riwayat</a>
+            <div class="aksi-barang" style="margin-top:6px">
+              <a href="/barang/{{ $b->id }}/edit" class="aksi-barang selesai">Edit</a>
+              <a href="/barang/{{ $b->id }}/riwayat" class="aksi-barang selesai">Riwayat</a>
               <form method="POST" action="/barang/{{ $b->id }}" style="display:inline;margin:0" onsubmit="return confirm('Hapus barang ini?')">
                 @csrf @method('DELETE')
-                <button type="submit" class="badge rusak" style="border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 10px;font-size:13px">Hapus</button>
+                <button type="submit" class="aksi-barang rusak">Hapus</button>
               </form>
             </div>
           </div>

@@ -60,12 +60,18 @@
     border-radius:12px;padding:10px 4px;font-size:13px;font-weight:600}
   nav a:active{background:var(--acc);color:#fff;border-color:var(--acc)}
   .nav-label{font-size:14px;font-weight:600;color:var(--mut);margin:18px 0 6px}
+  .aksi-barang{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:64px;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;border:0}
+  .aksi-barang.selesai{background:var(--green-bg);color:var(--green)}
+  .aksi-barang.rusak{background:var(--red-bg);color:var(--red)}
+  .aksi-barang.sec{background:#fff;color:var(--fg);border:1px solid var(--bd)}
   nav.nav-quiet{grid-template-columns:repeat(2,2fr);gap:8px;margin:0 0 16px}
   nav.nav-quiet a{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;text-decoration:none;color:var(--fg);background:var(--card);border:1px solid var(--bd);
     border-radius:12px;font-size:13px;font-weight:600}
   nav.nav-quiet a:active{background:#f3f4f6}
   .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+  .card.amber{border-color:var(--amber)}
+  .amber-text{color:var(--amber)}
   .card h2{margin:0 0 12px;font-size:18px;font-weight:600}
   label{font-size:15px;color:#374151;display:block;margin:12px 0 6px;font-weight:600}
   input,select{width:100%;padding:12px;border:1px solid var(--bd);border-radius:10px;font-size:17px;background:#fff;min-height:50px}
@@ -95,6 +101,7 @@
   th,td{text-align:left;padding:10px 6px;border-bottom:1px solid var(--bd)}
   th{color:var(--mut);font-size:14px;font-weight:600}
   .hint{font-size:15px;color:var(--mut);margin:6px 0 10px;line-height:1.5}
+  .hint-sm{font-size:14px;color:var(--mut);margin:4px 0 6px;line-height:1.4}
   .quick{display:grid;gap:10px;margin-bottom:14px}
   .quick a{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;background:var(--card);
     border:1px solid var(--bd);text-decoration:none;color:var(--fg);font-size:18px;font-weight:600;min-height:64px}

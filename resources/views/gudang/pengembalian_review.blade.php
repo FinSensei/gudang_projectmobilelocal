@@ -4,6 +4,7 @@
 <div class="card">
   <h2>Langkah 2 — cek ringkasan</h2>
   <p class="hint">Pastikan angka di bawah benar sebelum disimpan. Angka <span class="hi">merah</span> = hilang.</p>
+  <div class="table-scroll">
   <table>
     <tr><th>Barang</th><th>Keluar</th><th>Baik</th><th>Ringan</th><th>Berat</th><th>Hilang</th><th>Keterangan</th></tr>
     @foreach($rows as $r)
@@ -18,6 +19,7 @@
       </tr>
     @endforeach
   </table>
+  </div>
   <p style="font-size:18px;margin-top:12px">Total hilang: <b class="{{ $totalHilang>0 ? 'hi' : '' }}" style="font-size:22px">{{ $totalHilang }}</b></p>
 
   <form method="POST" action="/pengembalian" id="form-final">
